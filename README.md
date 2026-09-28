@@ -1,39 +1,179 @@
 # REVORA MOTO
 
-Arabic and English motorcycle marketplace and gear store using Next.js App Router and Supabase. This is an **in-progress implementation** of [`Web`](./Web), continued under [`Web2`](./Web2). It is **not production ready**. The verified matrix and concrete gaps are in [`IMPLEMENTATION_AUDIT.md`](./IMPLEMENTATION_AUDIT.md).
+متجر إلكتروني عربي وإنجليزي للدراجات النارية وقطع الغيار ومستلزمات القيادة، مع لوحة لإدارة عمليات المتجر وحسابات العملاء.
 
-## Run locally
+**رابط التطبيق:** [web-mu-woad-22.vercel.app](https://web-mu-woad-22.vercel.app)
 
-1. Install Node.js 20.9 or newer and the Supabase CLI with Docker or Podman.
-2. Run `npm ci`.
-3. Run `supabase start`; copy its API URL and publishable/anon key into `.env.local` using `.env.example`. Set `NEXT_PUBLIC_SITE_URL=http://localhost:3000`.
-4. Run `supabase db reset --local` to apply all migrations and demo seed data.
-5. Run `npm run dev` and open `/ar` or `/en` on port 3000.
+> **حالة المشروع:** التطبيق منشور على رابط المعاينة، لكنه لا يزال قيد الاستكمال وغير معتمد للإطلاق التجاري. الدفع الإلكتروني الفعلي وإعدادات البريد وOAuth ومراجعات الأمان والإتاحة تحتاج إلى استكمال قبل استقبال معاملات حقيقية. راجع [تقرير التنفيذ](./IMPLEMENTATION_AUDIT.md) و[حالة الأنظمة](./AGENT_STATUS.md).
 
-The seed creates 28 products and six motorcycles with demo flags. It creates no customer or staff Auth accounts. Demo images are illustrative.
+## نبذة عن التطبيق
 
-## Verification
+يقدم REVORA MOTO تجربة متجر متجاوبة تدعم العربية باتجاه RTL والإنجليزية باتجاه LTR. يعتمد على Supabase لتسجيل الدخول والبيانات والصلاحيات، ويحسب الأسعار والمخزون والخصومات والدفعات المبدئية على الخادم وقاعدة البيانات.
+
+### واجهة المتجر
+
+- تصفح المنتجات والدراجات النارية الجديدة والمستعملة.
+- البحث والتصفية والترتيب وعرض النتائج على صفحات.
+- عرض تفاصيل المنتج والصور والخيارات والتوافق مع الدراجات.
+- مقارنة الدراجات وإدارة المفضلة ومرآب العميل.
+- سلة مشتريات وتحديث الكميات والتحقق من الأسعار والمخزون.
+- إتمام الطلب واختيار العنوان وطريقة الدفع المتاحة.
+- طلب حجز دراجة ومتابعة حالة الحجز.
+
+### حساب العميل
+
+- الملف الشخصي والعناوين.
+- الطلبات وتفاصيلها والحجوزات.
+- قائمة المفضلة والمرآب ومراجعات المنتجات.
+- الإشعارات وطلبات الإرجاع وتسجيلات الضمان ومطالباته.
+
+### لوحة الإدارة
+
+تتضمن المسارات الحالية لوحة معلومات وإدارة المنتجات والخيارات والدراجات، والطلبات والحجوزات والعملاء والمخزون والمستودعات والفروع والموردين وأوامر الشراء والعروض والمراجعات والإرجاع والضمان والموظفين والأدوار والصلاحيات والإعدادات والتقارير وسجل التدقيق.
+
+تعتمد صلاحيات الإدارة على التحقق في الخادم وقاعدة البيانات وسياسات RLS، وليس على إخفاء عناصر الواجهة فقط. تختلف درجة اكتمال مسارات الإدارة؛ راجع تقرير التنفيذ قبل اعتماد أي سير عمل تشغيلي.
+
+## التقنية
+
+- **Next.js 15** باستخدام App Router وReact 19.
+- **TypeScript** للتحقق من الأنواع.
+- **Supabase** للمصادقة وPostgreSQL وRLS وStorage وواجهات RPC.
+- **Zod** للتحقق من مدخلات النماذج والإجراءات.
+- **Vitest** لاختبارات الوحدات و**Playwright** لاختبارات المتصفح.
+- تنسيقات RTL/LTR وعرض العملة التجارية الأساسية بالجنيه المصري EGP.
+
+## بنية المشروع
+
+```text
+src/
+  app/                 صفحات المتجر والحساب والإدارة وواجهات API
+  components/          مكونات الواجهة المشتركة
+  lib/                 Supabase والتحقق والتنسيق ومنطق الخدمات
+supabase/
+  migrations/          تغييرات قاعدة البيانات المتتابعة
+  tests/               اختبارات SQL وRLS
+  seed.sql             بيانات تجريبية للتطوير المحلي فقط
+e2e/                   اختبارات Playwright
+tool/                  أدوات الاختبار والتشغيل المحلية
+```
+
+## المتطلبات
+
+- Node.js إصدار 20.9 أو أحدث.
+- npm.
+- Supabase CLI.
+- Docker أو Podman لتشغيل Supabase المحلي واختبارات SQL والمتصفح.
+
+## التشغيل محليًا
+
+1. ثبّت الاعتماديات:
+
+   ```bash
+   npm ci
+   ```
+
+2. شغّل خدمات Supabase المحلية:
+
+   ```bash
+   npx supabase start
+   ```
+
+3. أنشئ ملف `.env.local` من `.env.example`، ثم استخدم عنوان Supabase المحلي ومفتاحه العام اللذين يعرضهما الأمر `npx supabase status`. اضبط عنوان الموقع المحلي:
+
+   ```dotenv
+   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=ضع_المفتاح_العام_المحلي_هنا
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   ```
+
+   لا تنسخ قيم `.env.local` من بيئة أخرى، ولا تضع مفتاح `service_role` في متغير يبدأ بـ`NEXT_PUBLIC_` أو في كود المتصفح.
+
+4. أعد إنشاء قاعدة البيانات **المحلية** وتطبيق الترحيلات وبذرة التطوير:
+
+   ```bash
+   npx supabase db reset --local
+   ```
+
+   ينشئ `supabase/seed.sql` بيانات عرض تجريبية محلية. لا تستخدمه على قاعدة بيانات سحابية أو إنتاجية.
+
+5. شغّل التطبيق:
+
+   ```bash
+   npm run dev
+   ```
+
+   افتح [http://localhost:3000/ar](http://localhost:3000/ar) أو [http://localhost:3000/en](http://localhost:3000/en).
+
+## متغيرات البيئة
+
+انسخ `.env.example` إلى `.env.local` واضبط القيم حسب بيئتك:
+
+| المتغير                         | الاستخدام                                                      |
+| ------------------------------- | -------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | عنوان Supabase المستخدم من التطبيق.                            |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | المفتاح العام لـSupabase؛ تقيّده سياسات RLS.                   |
+| `NEXT_PUBLIC_SITE_URL`          | عنوان الموقع للروابط والبيانات المنظمة.                        |
+| `PAYMENT_PROVIDER`              | مزود الدفع؛ القيمة الافتراضية `sandbox`.                       |
+| `PAYMENT_GATEWAY_URL`           | نقطة بدء الدفع لدى المزود بعد اختياره وتنفيذه.                 |
+| `PAYMENT_GATEWAY_REFUND_URL`    | نقطة طلب الاسترداد لدى المزود عند توفرها.                      |
+| `PAYMENT_GATEWAY_SECRET`        | سر تكامل الدفع؛ خادمي فقط.                                     |
+| `PAYMENT_WEBHOOK_SECRET`        | سر توقيع والتحقق من إشعارات الدفع والاسترداد.                  |
+| `REVORA_TASK_SECRET`            | سر حماية مهام الصيانة المجدولة.                                |
+| `SUPABASE_SERVICE_ROLE_KEY`     | مفتاح خادمي بصلاحيات عالية؛ لا ترسله للمتصفح ولا تحفظه في Git. |
+| `USD_EGP_RATE`                  | سعر تحويل موجب وحديث عند تفعيل عرض الدولار.                    |
+
+لا يلزم إعداد بيانات مزود دفع حقيقي لتشغيل وضع التطوير. لا تعتبر سجلات الدفع المعلقة دليلًا على تحصيل أموال فعلية.
+
+## التحقق والاختبارات
+
+شغّل الفحوصات التالية من جذر المشروع:
 
 ```bash
 npm run format:check
 npm run lint
 npm run typecheck
-npm run test
+npm test
 bash tool/test_db.sh
 npm run test:e2e
 npm run build
+git diff --check
 ```
 
-The SQL runner requires a running **local** Supabase database and rolls back each suite. Browser tests create local Auth/order/reservation data; reset the local database before repeating them if reservation conflicts arise. Run the production build after browser tests stop their dev server.
+يتطلب `tool/test_db.sh` قاعدة Supabase محلية عاملة، وتنفذ اختبارات SQL داخل معاملات يتم التراجع عنها. يشغّل `npm run test:e2e` اختبارات المتصفح محليًا، ولا ينبغي توجيهه إلى مشروع Supabase سحابي. أوقف خادم التطوير قبل بناء الإنتاج إذا تعارض مجلد `.next`.
 
-## Current scope
+## قاعدة البيانات والترحيلات
 
-- Public bilingual catalog, paginated search, motorcycle comparison, fitment, active My Garage, cart, variant checkout, reservations and customer account controls.
-- Customer returns and warranty claims, staff inventory/purchasing, promotions, catalog/vehicle editing, sales transitions, moderation, staff permissions and real-data reports.
-- Permission-gated customer directory, audit log and safe site settings; paginated catalogs, enhanced motorcycle gallery and database-derived structured data.
-- Supabase RLS and server-side transaction RPCs for privileged stock, price, deposit, discount, status and case changes.
-- Payment/refund records, idempotent event history and provider-independent webhook contracts exist. The user has deferred choosing an Egyptian gateway, so live card/InstaPay captures and external refunds remain blocked. Email delivery requires provider credentials and domain configuration.
+تقع تغييرات PostgreSQL في `supabase/migrations/` ويجب إضافة التغييرات الجديدة بملفات ترحيل متتابعة، مع إبقاء الترحيلات المطبقة تاريخيًا دون تعديل. تغطي المخططات الحالية الحسابات والمنتجات والخيارات والتوافق والدراجات والسلة والطلبات والحجوزات والمدفوعات والمخزون والموردين والعروض والإرجاع والضمان والإشعارات والتقارير.
 
-The app still has partial operational workflows and has not passed the complete accessibility, localization, Admin or production security review. Passing tests and builds do not mean it is approved for production.
+بعد إضافة ترحيل، تحقق منه على Supabase محليًا وشغّل اختبارات SQL/RLS. لا تستخدم `db reset --linked`، ولا تدفع بيانات `seed.sql`، ولا تطبق الترحيلات على السحابة إلا بعد مراجعتها والتأكد من أنها آمنة للإنتاج.
 
-Read [`AGENT_STATUS.md`](./AGENT_STATUS.md) for each major feature's status, [`CLOUD_SETUP.md`](./CLOUD_SETUP.md) for the linked cloud project, and [`DEPLOYMENT.md`](./DEPLOYMENT.md) for release prerequisites.
+## الأمان والخصوصية
+
+- تستخدم الصفحات الخادمية وإجراءات الخادم جلسة Supabase للتحقق من هوية المستخدم.
+- تحمي RLS البيانات بحسب الملكية والصلاحية، وتتحقق قواعد الخادم وقاعدة البيانات من الإجراءات الحساسة.
+- يعاد حساب أسعار الطلب والخصومات والمخزون والدفعة المبدئية على الخادم أو في PostgreSQL.
+- لا تضع مفاتيح الخدمة أو أسرار الدفع في المتصفح أو ملفات Git.
+- لا تستخدم بيانات البذرة التجريبية كبيانات متجر فعلية.
+
+هذه الضوابط لا تعني اكتمال مراجعة الأمان أو اعتماد التطبيق للإنتاج. راجع [سياسة الأمان](./SECURITY.md) و[إعداد Supabase السحابي](./CLOUD_SETUP.md).
+
+## الدفع والبريد الإلكتروني
+
+بنية الدفع مستقلة عن المزود وتحتفظ بحالات الدفع وسجل الأحداث والتحقق من التوقيع ومنع تكرار الإشعارات. الإعداد الافتراضي تجريبي، ولم يُعتمد مزود مصري أو تُثبت بيانات اعتماده؛ لذلك لا يدعم التطبيق حاليًا تحصيلًا حقيقيًا لبطاقات Visa/Mastercard أو InstaPay أو تنفيذ استردادات مباشرة.
+
+يوجد صندوق بريد لإشعارات التطبيق، لكن إرسال البريد للعملاء يتطلب مزودًا خارجيًا وإعداد النطاق والمفاتيح. راجع [تفاصيل الدفع والاسترداد](./PAYMENTS.md).
+
+## النشر
+
+رابط التطبيق الحالي هو [https://web-mu-woad-22.vercel.app](https://web-mu-woad-22.vercel.app). إعداد استضافة الرابط لا يعني اجتياز متطلبات الإطلاق التجاري. قبل إطلاق الإنتاج، راجع [دليل النشر](./DEPLOYMENT.md) و[إعداد Supabase السحابي](./CLOUD_SETUP.md)، واضبط عنوان الموقع ومفاتيح البيئة وإعدادات Auth وOAuth والبريد ومزود الدفع، ثم أكمل مراجعات الأمان والإتاحة والعمليات.
+
+## وثائق إضافية
+
+- [تقرير تدقيق التنفيذ](./IMPLEMENTATION_AUDIT.md)
+- [حالة التنفيذ والتحقق](./AGENT_STATUS.md)
+- [معمارية التطبيق](./ARCHITECTURE.md)
+- [قاعدة البيانات](./DATABASE.md)
+- [اختبارات المشروع](./TESTING.md)
+- [الدفع والاستردادات](./PAYMENTS.md)
+- [إعداد Supabase السحابي](./CLOUD_SETUP.md)
+- [النشر ومتطلبات الإطلاق](./DEPLOYMENT.md)
