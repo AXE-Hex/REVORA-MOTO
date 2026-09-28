@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase, currentUser } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
+import { operationFailed } from '@/lib/action-feedback';
 import { ProductCard } from '@/components/cards';
 import { AddGarage } from '@/components/add-garage';
 import type { Product } from '@/lib/catalog';
@@ -81,7 +82,9 @@ export default async function Fitment({
         </div>
       </section>
       <div className="shell section-small">
-        {q.error && <div className="notice error">{q.error}</div>}
+        {q.error && (
+          <div className="notice error">{operationFailed(locale)}</div>
+        )}
         <AddGarage
           locale={locale}
           brands={brands || []}

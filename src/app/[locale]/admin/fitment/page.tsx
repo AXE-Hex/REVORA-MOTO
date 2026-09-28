@@ -21,7 +21,11 @@ export default async function AdminFitment({
   if (!allowed) notFound();
   const [{ data: products }, { data: variants }, { data: rules }] =
     await Promise.all([
-      db!.from('products').select('id,sku,name_en').order('name_en').limit(500),
+      db!
+        .from('products')
+        .select('id,sku,name_ar,name_en')
+        .order('name_en')
+        .limit(500),
       db!.from('motorcycle_variants').select('id,name,model_id').order('name'),
       db!
         .from('fitment_rules')
@@ -56,7 +60,7 @@ export default async function AdminFitment({
       <div className="two-column">
         <div className="panel">
           <h2>{pick(locale, 'قواعد التوافق', 'FITMENT RULES')}</h2>
-          <div className="compare-scroll">
+          <div className="compare-scroll admin-fitment-desktop-table">
             <table className="data-table">
               <thead>
                 <tr>
@@ -80,15 +84,60 @@ export default async function AdminFitment({
                     </td>
                     <td>
                       {rule.is_exclusion
-                        ? 'exclusion'
+                        ? pick(locale, 'استثناء', 'Exclusion')
                         : rule.is_universal
-                          ? 'universal'
-                          : 'exact'}
+                          ? pick(locale, 'عام', 'Universal')
+                          : pick(locale, 'مطابقة محددة', 'Exact fit')}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="admin-fitment-mobile-cards">
+            {(rules || []).map((rule) => (
+              <article
+                className="admin-mobile-data-card"
+                key={`fitment-mobile-${rule.id}`}
+              >
+                <h3>{productById.get(rule.product_id)?.sku || '—'}</h3>
+                <dl>
+                  <div>
+                    <dt>{pick(locale, 'النسخة', 'Variant')}</dt>
+                    <dd>
+                      {rule.is_universal
+                        ? pick(locale, 'عام', 'Universal')
+                        : variantById.get(rule.variant_id)?.name || '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{pick(locale, 'السنوات', 'Years')}</dt>
+                    <dd>
+                      {rule.year_from || '—'}–{rule.year_to || '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{pick(locale, 'النوع', 'Type')}</dt>
+                    <dd>
+                      {rule.is_exclusion
+                        ? pick(locale, 'استثناء', 'Exclusion')
+                        : rule.is_universal
+                          ? pick(locale, 'عام', 'Universal')
+                          : pick(locale, 'مطابقة محددة', 'Exact fit')}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
+            {!rules?.length && (
+              <p>
+                {pick(
+                  locale,
+                  'لا توجد قواعد توافق بعد',
+                  'No fitment rules yet',
+                )}
+              </p>
+            )}
           </div>
         </div>
         <form action={addFitmentRule} className="panel form-stack">
@@ -100,7 +149,8 @@ export default async function AdminFitment({
               <option value="">—</option>
               {(products || []).map((product) => (
                 <option value={product.id} key={product.id}>
-                  {product.sku} · {product.name_en}
+                  {product.sku} ·{' '}
+                  {pick(locale, product.name_ar, product.name_en)}
                 </option>
               ))}
             </select>
@@ -108,9 +158,15 @@ export default async function AdminFitment({
           <label className="field-label">
             {pick(locale, 'النوع', 'RULE TYPE')}
             <select className="input" name="kind">
-              <option value="exact">exact</option>
-              <option value="universal">universal</option>
-              <option value="exclusion">exclusion</option>
+              <option value="exact">
+                {pick(locale, 'مطابقة محددة', 'Exact fit')}
+              </option>
+              <option value="universal">
+                {pick(locale, 'عام', 'Universal')}
+              </option>
+              <option value="exclusion">
+                {pick(locale, 'استثناء', 'Exclusion')}
+              </option>
             </select>
           </label>
           <label className="field-label">

@@ -32,10 +32,7 @@ export async function createSupplier(form: FormData) {
     ...supplier,
     email: supplier.email || null,
   });
-  if (error)
-    redirect(
-      `/${locale}/admin/suppliers?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/suppliers?error=operation`);
   revalidatePath(`/${locale}/admin/suppliers`);
   redirect(`/${locale}/admin/suppliers?success=supplier`);
 }
@@ -62,10 +59,7 @@ export async function linkSupplierProduct(form: FormData) {
     },
     { onConflict: 'supplier_id,product_id' },
   );
-  if (error)
-    redirect(
-      `/${locale}/admin/suppliers?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/suppliers?error=operation`);
   revalidatePath(`/${locale}/admin/suppliers`);
   redirect(`/${locale}/admin/suppliers?success=linked`);
 }
@@ -94,10 +88,7 @@ export async function createPurchaseOrder(form: FormData) {
     p_quantity: quantity,
     p_unit_cost: unit_cost,
   });
-  if (error)
-    redirect(
-      `/${locale}/admin/suppliers?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/suppliers?error=operation`);
   revalidatePath(`/${locale}/admin/suppliers`);
   revalidatePath(`/${locale}/admin/inventory`);
   redirect(`/${locale}/admin/suppliers?success=ordered`);
@@ -118,10 +109,7 @@ export async function receiveItem(form: FormData) {
     p_item: item,
     p_quantity: quantity,
   });
-  if (error)
-    redirect(
-      `/${locale}/admin/suppliers?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/suppliers?error=operation`);
   revalidatePath(`/${locale}/admin/suppliers`);
   revalidatePath(`/${locale}/admin/inventory`);
   redirect(`/${locale}/admin/suppliers?success=received`);

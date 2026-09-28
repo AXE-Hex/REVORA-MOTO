@@ -17,14 +17,16 @@ export async function POST(request: NextRequest) {
   const admin = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const [reservations, orders] = await Promise.all([
+  const [reservations, orders, searchTerms] = await Promise.all([
     admin.rpc('expire_unpaid_reservations', { p_limit: 100 }),
     admin.rpc('expire_unpaid_orders', { p_limit: 100 }),
+    admin.rpc('purge_search_term_daily'),
   ]);
-  if (reservations.error || orders.error)
+  if (reservations.error || orders.error || searchTerms.error)
     return NextResponse.json({ error: 'Expiration failed' }, { status: 500 });
   return NextResponse.json({
     expired_reservations: reservations.data,
     expired_orders: orders.data,
+    purged_search_activity: searchTerms.data,
   });
 }

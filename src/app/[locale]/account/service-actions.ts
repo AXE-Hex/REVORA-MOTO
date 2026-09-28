@@ -46,7 +46,7 @@ async function uploadEvidence(
   const { error: uploadError } = await db.storage
     .from('case-evidence')
     .upload(path, image.file, { contentType: image.mime, upsert: false });
-  if (uploadError) return uploadError.message;
+  if (uploadError) return 'upload';
   const { error } = await db.rpc('register_case_attachment', {
     p_case: caseId,
     p_kind: kind,
@@ -56,7 +56,7 @@ async function uploadEvidence(
   });
   if (error) {
     await db.storage.from('case-evidence').remove([path]);
-    return error.message;
+    return 'upload';
   }
   return null;
 }
@@ -131,7 +131,7 @@ export async function registerWarranty(formData: FormData) {
     p_serial: serial || null,
     p_unit: unit,
   });
-  if (error) failure(locale, 'warranties', error.message);
+  if (error) failure(locale, 'warranties', 'operation');
   revalidatePath(`/${locale}/account/warranties`);
   redirect(`/${locale}/account/warranties`);
 }

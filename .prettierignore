@@ -5,3 +5,5 @@ node_modules/
 supabase/.temp/
 playwright-report/
 test-results/
+REVORA_CODEX_MASTER_PROMPT.md
+REVORA_UI_UX_AUDIT_AND_REDESIGN.md

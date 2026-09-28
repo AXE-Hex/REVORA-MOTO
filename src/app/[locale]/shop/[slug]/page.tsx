@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { product } from '@/lib/catalog';
 import { isLocale, money, pick } from '@/lib/i18n';
+import { operationFailed } from '@/lib/action-feedback';
 import { AddToCart } from '@/components/add-to-cart';
 import {
   ProductGallery,
@@ -50,7 +51,11 @@ export default async function ProductDetail({
   searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
-  searchParams: Promise<{ review?: string; review_error?: string }>;
+  searchParams: Promise<{
+    review?: string;
+    review_error?: string;
+    review_sort?: string;
+  }>;
 }) {
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
@@ -124,16 +129,52 @@ export default async function ProductDetail({
       (match) => match.product_id === item.id,
     ),
   );
+  const query = await searchParams;
+  const reviewOrder = query.review_sort === 'highest' ? 'rating' : 'created_at';
+  const ascending = query.review_sort === 'oldest';
   const { data: reviews } = db
     ? await db
         .from('reviews')
-        .select('id,rating,body,created_at')
+        .select('id,order_id,rating,body,created_at')
         .eq('product_id', item.id)
         .eq('status', 'published')
-        .order('created_at', { ascending: false })
+        .order(reviewOrder, { ascending })
         .limit(20)
     : { data: [] };
+  const reviewCounts = await Promise.all(
+    [1, 2, 3, 4, 5].map(async (rating) => {
+      if (!db) return 0;
+      const { count } = await db
+        .from('reviews')
+        .select('id', { count: 'exact', head: true })
+        .eq('product_id', item.id)
+        .eq('status', 'published')
+        .eq('rating', rating);
+      return count || 0;
+    }),
+  );
+  const reviewCount = reviewCounts.reduce((total, count) => total + count, 0);
+  const averageRating = reviewCount
+    ? reviewCounts.reduce(
+        (total, count, index) => total + count * (index + 1),
+        0,
+      ) / reviewCount
+    : 0;
+  const publishedOrderIds = [
+    ...new Set((reviews || []).map((review) => review.order_id)),
+  ];
+  const { data: publishedOrders } =
+    db && publishedOrderIds.length
+      ? await db
+          .from('orders')
+          .select('id,order_number')
+          .in('id', publishedOrderIds)
+      : { data: [] };
+  const publishedOrderNumbers = new Map(
+    (publishedOrders || []).map((order) => [order.id, order.order_number]),
+  );
   let eligible: string[] = [];
+  let eligibleOrderNumbers = new Map<string, number>();
   if (db && user) {
     const { data: items } = await db
       .from('order_items')
@@ -143,14 +184,27 @@ export default async function ProductDetail({
     if (ids.length) {
       const { data: orders } = await db
         .from('orders')
-        .select('id')
+        .select('id,order_number')
         .eq('user_id', user.id)
         .eq('status', 'delivered')
         .in('id', ids);
-      eligible = (orders || []).map((x) => x.id);
+      const { data: existingReviews } = await db
+        .from('reviews')
+        .select('order_id')
+        .eq('user_id', user.id)
+        .eq('product_id', item.id);
+      const reviewedOrderIds = new Set(
+        (existingReviews || []).map((review) => review.order_id),
+      );
+      const availableOrders = (orders || []).filter(
+        (order) => !reviewedOrderIds.has(order.id),
+      );
+      eligible = availableOrders.map((order) => order.id);
+      eligibleOrderNumbers = new Map(
+        availableOrders.map((order) => [order.id, order.order_number]),
+      );
     }
   }
-  const query = await searchParams;
   const canonical = siteUrl(`/${locale}/shop/${encodeURIComponent(slug)}`);
   const structuredData = {
     '@context': 'https://schema.org',
@@ -221,41 +275,43 @@ export default async function ProductDetail({
           <p>
             {pick(locale, item.description_ar || '', item.description_en || '')}
           </p>
-          <div className="price">
-            {money(item.sale_price_egp || item.price_egp, locale)}
-          </div>
-          {fitmentKnown && (
-            <div className={`notice ${compatible ? '' : 'error'}`}>
-              {compatible
+          <div className="detail-purchase-panel">
+            <div className="price">
+              {money(item.sale_price_egp ?? item.price_egp, locale)}
+            </div>
+            {fitmentKnown && (
+              <div className={`notice ${compatible ? '' : 'error'}`}>
+                {compatible
+                  ? pick(
+                      locale,
+                      'هذه القطعة متوافقة مع دراجتك النشطة في مرآبي.',
+                      'This part fits your active motorcycle in My Garage.',
+                    )
+                  : pick(
+                      locale,
+                      'هذه القطعة غير متوافقة مع دراجتك النشطة. تحقق من الطراز والسنة قبل الشراء.',
+                      'This part does not fit your active motorcycle. Check model and year before buying.',
+                    )}
+              </div>
+            )}
+            <p>
+              {item.stock > 0
                 ? pick(
                     locale,
-                    'هذه القطعة متوافقة مع دراجتك النشطة في مرآبي.',
-                    'This part fits your active motorcycle in My Garage.',
+                    `متوفر (${item.stock})`,
+                    `In stock (${item.stock})`,
                   )
-                : pick(
-                    locale,
-                    'هذه القطعة غير متوافقة مع دراجتك النشطة. تحقق من الطراز والسنة قبل الشراء.',
-                    'This part does not fit your active motorcycle. Check model and year before buying.',
-                  )}
+                : pick(locale, 'غير متوفر حالياً', 'Currently unavailable')}
+            </p>
+            <div className="detail-actions">
+              <AddToCart
+                id={item.id}
+                locale={locale}
+                disabled={item.stock < 1}
+                variants={variants || []}
+              />
+              <WishlistButton id={item.id} kind="product" locale={locale} />
             </div>
-          )}
-          <p>
-            {item.stock > 0
-              ? pick(
-                  locale,
-                  `متوفر (${item.stock})`,
-                  `In stock (${item.stock})`,
-                )
-              : pick(locale, 'غير متوفر حالياً', 'Currently unavailable')}
-          </p>
-          <div className="detail-actions">
-            <AddToCart
-              id={item.id}
-              locale={locale}
-              disabled={item.stock < 1}
-              variants={variants || []}
-            />
-            <WishlistButton id={item.id} kind="product" locale={locale} />
           </div>
           <div className="spec-list">
             <div className="spec-row">
@@ -276,10 +332,95 @@ export default async function ProductDetail({
         </div>
       </div>
       <section className="shell section-small">
-        <span className="section-index">VERIFIED REVIEWS</span>
-        <h2 className="page-title">
-          {pick(locale, 'تقييمات العملاء', 'CUSTOMER REVIEWS')}
-        </h2>
+        <div className="product-reviews-heading" id="reviews">
+          <div>
+            <span className="section-index">
+              {pick(locale, 'آراء مشترين موثقين', 'VERIFIED PURCHASES')}
+            </span>
+            <h2 className="page-title">
+              {pick(locale, 'تقييمات العملاء', 'CUSTOMER REVIEWS')}
+            </h2>
+          </div>
+          {reviewCount > 0 && (
+            <div
+              className="product-rating-summary"
+              aria-label={pick(locale, 'ملخص التقييمات', 'Review summary')}
+            >
+              <strong>{averageRating.toFixed(1)}</strong>
+              <span aria-label={`${averageRating.toFixed(1)} / 5`}>★★★★★</span>
+              <small>
+                {pick(locale, `${reviewCount} تقييم`, `${reviewCount} reviews`)}
+              </small>
+            </div>
+          )}
+        </div>
+        {reviewCount > 0 && (
+          <div
+            className="review-distribution"
+            aria-label={pick(locale, 'توزيع التقييمات', 'Rating distribution')}
+          >
+            {[5, 4, 3, 2, 1].map((rating) => {
+              const count = reviewCounts[rating - 1];
+              const percent = Math.round((count / reviewCount) * 100);
+              return (
+                <div className="review-distribution-row" key={rating}>
+                  <span>{rating} ★</span>
+                  <div
+                    className="review-distribution-track"
+                    role="progressbar"
+                    aria-label={pick(
+                      locale,
+                      `${rating} نجوم`,
+                      `${rating} stars`,
+                    )}
+                    aria-valuemin={0}
+                    aria-valuemax={reviewCount}
+                    aria-valuenow={count}
+                  >
+                    <span style={{ width: `${percent}%` }} />
+                  </div>
+                  <small>{count}</small>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <nav
+          className="review-controls"
+          aria-label={pick(locale, 'ترتيب التقييمات', 'Review filters')}
+        >
+          {(
+            [
+              ['newest', pick(locale, 'الأحدث', 'Newest')],
+              ['highest', pick(locale, 'الأعلى تقييماً', 'Highest rated')],
+              ['oldest', pick(locale, 'الأقدم', 'Oldest')],
+            ] as const
+          ).map(([sort, label]) => (
+            <Link
+              key={sort}
+              className={`button ${query.review_sort === sort || (!query.review_sort && sort === 'newest') ? 'button-accent' : 'button-ghost'}`}
+              href={`/${locale}/shop/${slug}?review_sort=${sort}#reviews`}
+              aria-current={
+                query.review_sort === sort ||
+                (!query.review_sort && sort === 'newest')
+                  ? 'true'
+                  : undefined
+              }
+            >
+              {label}
+            </Link>
+          ))}
+          <span
+            className="review-verified-filter"
+            aria-label={pick(
+              locale,
+              'تظهر التقييمات المنشورة من مشتريات موثقة فقط',
+              'Showing published verified purchases only',
+            )}
+          >
+            {pick(locale, '✓ مشتريات موثقة', '✓ Verified purchases')}
+          </span>
+        </nav>
         {reviews?.length ? (
           reviews.map((r) => (
             <div key={r.id} className="panel" style={{ marginBottom: 12 }}>
@@ -290,7 +431,9 @@ export default async function ProductDetail({
               <p>{r.body}</p>
               <small>
                 {pick(locale, 'شراء موثق', 'Verified purchase')} ·{' '}
-                {new Date(r.created_at).toLocaleDateString()}
+                {pick(locale, 'الطلب', 'Order')} #
+                {publishedOrderNumbers.get(r.order_id) ?? '—'} ·{' '}
+                {new Date(r.created_at).toLocaleDateString(locale)}
               </small>
             </div>
           ))
@@ -313,7 +456,7 @@ export default async function ProductDetail({
           </p>
         )}
         {query.review_error && (
-          <p className="notice error">{query.review_error}</p>
+          <p className="notice error">{operationFailed(locale)}</p>
         )}
         {eligible.length > 0 && (
           <form action={submitReview} className="form-stack panel">
@@ -326,21 +469,35 @@ export default async function ProductDetail({
               <select className="input" name="order">
                 {eligible.map((id) => (
                   <option value={id} key={id}>
-                    {id.slice(0, 8)}
+                    #{eligibleOrderNumbers.get(id)}
                   </option>
                 ))}
               </select>
             </label>
-            <label className="field-label">
-              {pick(locale, 'التقييم', 'RATING')}
-              <select className="input" name="rating">
+            <fieldset className="field-label review-star-picker">
+              <legend>
+                {pick(locale, 'تقييمك من خمس نجوم', 'Your five-star rating')}
+              </legend>
+              <div
+                role="radiogroup"
+                aria-label={pick(locale, 'اختيار التقييم', 'Choose a rating')}
+              >
                 {[5, 4, 3, 2, 1].map((x) => (
-                  <option key={x} value={x}>
-                    {x} / 5
-                  </option>
+                  <label key={x}>
+                    <input
+                      type="radio"
+                      name="rating"
+                      value={x}
+                      defaultChecked={x === 5}
+                    />
+                    <span aria-hidden="true">★</span>
+                    <span className="visually-hidden">
+                      {pick(locale, `${x} من 5 نجوم`, `${x} out of 5 stars`)}
+                    </span>
+                  </label>
                 ))}
-              </select>
-            </label>
+              </div>
+            </fieldset>
             <label className="field-label">
               {pick(locale, 'تقييمك', 'YOUR REVIEW')}
               <textarea
@@ -350,7 +507,15 @@ export default async function ProductDetail({
                 maxLength={2000}
                 required
                 rows={4}
+                aria-describedby="review-body-help"
               />
+              <small id="review-body-help">
+                {pick(
+                  locale,
+                  'اكتب من 10 إلى 2000 حرف.',
+                  'Write between 10 and 2,000 characters.',
+                )}
+              </small>
             </label>
             <button className="button button-accent">
               {pick(locale, 'إرسال التقييم', 'SUBMIT REVIEW')}

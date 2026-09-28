@@ -79,7 +79,7 @@ export async function savePromotion(formData: FormData) {
     p_active: input.active === 'true',
     p_targets: targets,
   });
-  if (error) fail(error.message);
+  if (error) fail('operation');
   revalidatePath(`/${locale}/admin/promotions`);
   redirect(`/${locale}/admin/promotions?saved=1`);
 }
@@ -104,10 +104,7 @@ export async function togglePromotion(formData: FormData) {
     .from('promotions')
     .update({ active: active === 'true' })
     .eq('id', id);
-  if (error)
-    redirect(
-      `/${locale}/admin/promotions?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/promotions?error=operation`);
   revalidatePath(`/${locale}/admin/promotions`);
   redirect(`/${locale}/admin/promotions?saved=1`);
 }

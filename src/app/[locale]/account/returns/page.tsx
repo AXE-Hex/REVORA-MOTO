@@ -1,7 +1,9 @@
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, money, pick } from '@/lib/i18n';
+import { formatDate } from '@/lib/format';
+import { operationFailed } from '@/lib/action-feedback';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { requestReturn } from '../service-actions';
 
 export default async function Returns({
@@ -31,21 +33,23 @@ export default async function Returns({
   const { data: cases } = await db
     .from('return_requests')
     .select(
-      'id,reason,customer_notes,admin_notes,inspection_notes,status,refund_amount_egp,created_at,order_id,return_items(order_item_id,quantity),return_history(from_status,to_status,note,created_at),case_attachments(storage_path)',
+      'id,reason,customer_notes,status,refund_amount_egp,created_at,order_id,return_items(order_item_id,quantity),return_history(from_status,to_status,created_at),case_attachments(storage_path)',
     )
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
   const { error } = await searchParams;
   return (
-    <div className="shell section-small">
-      <div className="breadcrumbs">
-        <Link href={`/${locale}/account`}>ACCOUNT</Link> / RETURNS
+    <section className="account-returns-page">
+      <div className="account-page-heading">
+        <span className="section-index">
+          {pick(locale, 'خدمة ما بعد البيع', 'AFTER-SALES')}
+        </span>
+        <h2 className="page-title">{pick(locale, 'المرتجعات', 'Returns')}</h2>
       </div>
-      <h1 className="page-title">{pick(locale, 'المرتجعات', 'RETURNS')}</h1>
-      {error && <div className="notice error">{error}</div>}
+      {error && <div className="notice error">{operationFailed(locale)}</div>}
       <div className="two-column">
         <div>
-          <h2>{pick(locale, 'طلبات الإرجاع', 'RETURN REQUESTS')}</h2>
+          <h3>{pick(locale, 'طلبات الإرجاع', 'Return requests')}</h3>
           {cases?.map(async (c) => {
             const imageLinks = await Promise.all(
               (c.case_attachments || []).map(async (a) => {
@@ -56,10 +60,12 @@ export default async function Returns({
               }),
             );
             return (
-              <div className="panel" key={c.id} style={{ marginBottom: 12 }}>
-                <strong>{c.reason}</strong>{' '}
-                <span className="status">{c.status}</span>
-                <p>
+              <article className="panel account-service-card" key={c.id}>
+                <div className="account-service-card-heading">
+                  <strong>{c.reason}</strong>
+                  <StatusBadge status={c.status} locale={locale} />
+                </div>
+                <p className="muted">
                   {pick(
                     locale,
                     'المبلغ المتوقع بعد المراجعة',
@@ -71,50 +77,49 @@ export default async function Returns({
                     : '—'}
                 </p>
                 {c.customer_notes && <p>{c.customer_notes}</p>}
-                {c.admin_notes && (
-                  <p>
-                    {pick(locale, 'ملاحظات الإدارة', 'Staff notes')}:{' '}
-                    {c.admin_notes}
-                  </p>
-                )}
-                {c.inspection_notes && (
-                  <p>
-                    {pick(locale, 'نتيجة الفحص', 'Inspection')}:{' '}
-                    {c.inspection_notes}
-                  </p>
-                )}
-                <small>
-                  {new Date(c.created_at).toLocaleDateString(
-                    locale === 'ar' ? 'ar-EG' : 'en-GB',
-                  )}
-                </small>
-                <ul>
+                <time dateTime={c.created_at}>
+                  {formatDate(c.created_at, locale)}
+                </time>
+                <ul className="account-service-history">
                   {c.return_history?.map((h) => (
                     <li key={`${h.created_at}-${h.to_status}`}>
-                      {h.to_status} ·{' '}
-                      {new Date(h.created_at).toLocaleString(
-                        locale === 'ar' ? 'ar-EG' : 'en-GB',
-                      )}
-                      {h.note ? ` · ${h.note}` : ''}
+                      <StatusBadge status={h.to_status} locale={locale} />
+                      <time dateTime={h.created_at}>
+                        {formatDate(h.created_at, locale)}
+                      </time>
                     </li>
                   ))}
                 </ul>
-                {imageLinks.filter(Boolean).map((url, index) => (
-                  <a key={index} href={url!} target="_blank" rel="noreferrer">
-                    {pick(locale, 'عرض صورة الدليل', 'View evidence')}{' '}
-                    {index + 1} ↗
-                  </a>
-                ))}
-              </div>
+                <div className="account-service-attachments">
+                  {imageLinks.filter(Boolean).map((url, index) => (
+                    <a key={index} href={url!} target="_blank" rel="noreferrer">
+                      {pick(locale, 'عرض صورة الدليل', 'View evidence')}{' '}
+                      {index + 1} ↗
+                    </a>
+                  ))}
+                </div>
+              </article>
             );
           })}
           {!cases?.length && (
-            <p>
-              {pick(locale, 'لا توجد طلبات إرجاع', 'No return requests yet')}
-            </p>
+            <div className="panel account-empty-state">
+              <h4>
+                {pick(locale, 'لا توجد طلبات إرجاع', 'No return requests yet')}
+              </h4>
+              <p className="muted">
+                {pick(
+                  locale,
+                  'يمكنك متابعة الطلبات المؤهلة وإرسال طلب الإرجاع من هذه الصفحة.',
+                  'Eligible delivered items can be selected in the form on this page.',
+                )}
+              </p>
+            </div>
           )}
         </div>
-        <form action={requestReturn} className="form-stack panel">
+        <form
+          action={requestReturn}
+          className="form-stack panel account-service-form"
+        >
           <h2>{pick(locale, 'طلب إرجاع', 'REQUEST A RETURN')}</h2>
           <p>
             {pick(
@@ -136,6 +141,15 @@ export default async function Returns({
               ))}
             </select>
           </label>
+          {!items?.length && (
+            <p className="muted">
+              {pick(
+                locale,
+                'لا توجد منتجات من طلبات مسلّمة مؤهلة للإرجاع.',
+                'No items from delivered orders are eligible for return.',
+              )}
+            </p>
+          )}
           <label className="field-label">
             {pick(locale, 'الكمية', 'QUANTITY')}
             <input
@@ -174,12 +188,19 @@ export default async function Returns({
               name="evidence"
               accept="image/jpeg,image/png,image/webp"
             />
+            <small>
+              {pick(
+                locale,
+                'JPG أو PNG أو WebP، بحد أقصى 5 ميغابايت.',
+                'JPG, PNG or WebP, up to 5 MB.',
+              )}
+            </small>
           </label>
-          <button className="button button-accent" disabled={!items?.length}>
+          <button className="button button-primary" disabled={!items?.length}>
             {pick(locale, 'إرسال الطلب', 'SUBMIT REQUEST')}
           </button>
         </form>
       </div>
-    </div>
+    </section>
   );
 }

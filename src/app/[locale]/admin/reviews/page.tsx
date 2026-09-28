@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
+import { StatusBadge, localizedStatus } from '@/components/ui/status-badge';
+import { ConfirmSubmitButton } from '@/components/confirm-submit-button';
 import { adminModerateReview } from '@/app/admin-actions';
 
 export default async function AdminReviews({
@@ -51,7 +53,8 @@ export default async function AdminReviews({
       {(reviews || []).map((review) => (
         <div className="panel" key={review.id} style={{ marginBottom: 12 }}>
           <p>
-            <strong>{'★'.repeat(review.rating)}</strong> · {review.status}
+            <strong>{'★'.repeat(review.rating)}</strong> ·{' '}
+            <StatusBadge status={review.status} locale={locale} />
           </p>
           <p>{review.body}</p>
           <small>
@@ -65,9 +68,21 @@ export default async function AdminReviews({
                   <input type="hidden" name="locale" value={locale} />
                   <input type="hidden" name="id" value={review.id} />
                   <input type="hidden" name="status" value={status} />
-                  <button className="button button-ghost" type="submit">
-                    {status}
-                  </button>
+                  {status === 'rejected' ? (
+                    <ConfirmSubmitButton
+                      label={localizedStatus(status, locale)}
+                      message={pick(
+                        locale,
+                        'هل تريد رفض هذا التقييم؟',
+                        'Reject this review?',
+                      )}
+                      className="button button-danger"
+                    />
+                  ) : (
+                    <button className="button button-success" type="submit">
+                      {localizedStatus(status, locale)}
+                    </button>
+                  )}
                 </form>
               ))}
             </div>

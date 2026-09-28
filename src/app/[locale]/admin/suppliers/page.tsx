@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
+import { operationFailed } from '@/lib/action-feedback';
+import { StatusBadge } from '@/components/ui/status-badge';
 import {
   createPurchaseOrder,
   createSupplier,
@@ -89,7 +91,7 @@ export default async function SuppliersPage({
       <h1 className="page-title">
         {pick(locale, 'الموردون وأوامر الشراء', 'SUPPLIERS & PURCHASE ORDERS')}
       </h1>
-      {error && <div className="notice error">{error}</div>}
+      {error && <div className="notice error">{operationFailed(locale)}</div>}
       {success && (
         <div className="notice">
           {pick(locale, 'تم حفظ العملية', 'Operation saved')}
@@ -217,9 +219,9 @@ export default async function SuppliersPage({
           </button>
         </form>
       </div>
-      <div className="panel" style={{ overflowX: 'auto', marginTop: 24 }}>
+      <div className="panel admin-supplier-section" style={{ marginTop: 24 }}>
         <h2>{pick(locale, 'الموردون', 'SUPPLIERS')}</h2>
-        <table className="data-table">
+        <table className="data-table admin-supplier-desktop-table">
           <thead>
             <tr>
               <th>{pick(locale, 'الاسم', 'NAME')}</th>
@@ -239,6 +241,30 @@ export default async function SuppliersPage({
             ))}
           </tbody>
         </table>
+        <div className="admin-supplier-mobile-cards">
+          {suppliers.map((supplier) => (
+            <article className="admin-mobile-data-card" key={supplier.id}>
+              <h3>{supplier.name}</h3>
+              <dl>
+                <div>
+                  <dt>{pick(locale, 'جهة الاتصال', 'Contact')}</dt>
+                  <dd>{supplier.contact_name || '—'}</dd>
+                </div>
+                <div>
+                  <dt>{pick(locale, 'البريد', 'Email')}</dt>
+                  <dd dir="ltr">{supplier.email || '—'}</dd>
+                </div>
+                <div>
+                  <dt>{pick(locale, 'الهاتف', 'Phone')}</dt>
+                  <dd dir="ltr">{supplier.phone || '—'}</dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+          {!suppliers.length && (
+            <p>{pick(locale, 'لا يوجد موردون بعد', 'No suppliers yet')}</p>
+          )}
+        </div>
       </div>
       <div className="two-column" style={{ marginTop: 24 }}>
         <form action={linkSupplierProduct} className="panel form-stack">
@@ -293,9 +319,9 @@ export default async function SuppliersPage({
             {pick(locale, 'حفظ المرجع', 'SAVE REFERENCE')}
           </button>
         </form>
-        <div className="panel" style={{ overflowX: 'auto' }}>
+        <div className="panel admin-supplier-section">
           <h2>{pick(locale, 'مراجع الموردين', 'SUPPLIER REFERENCES')}</h2>
-          <table className="data-table">
+          <table className="data-table admin-supplier-desktop-table">
             <thead>
               <tr>
                 <th>{pick(locale, 'المورد', 'SUPPLIER')}</th>
@@ -315,9 +341,44 @@ export default async function SuppliersPage({
               ))}
             </tbody>
           </table>
+          <div className="admin-supplier-mobile-cards">
+            {links.map((link) => (
+              <article
+                className="admin-mobile-data-card"
+                key={`${link.supplier_id}-${link.product_id}`}
+              >
+                <h3>{productNames.get(link.product_id) || '—'}</h3>
+                <dl>
+                  <div>
+                    <dt>{pick(locale, 'المورد', 'Supplier')}</dt>
+                    <dd>{supplierNames.get(link.supplier_id) || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>SKU</dt>
+                    <dd dir="ltr">{link.supplier_sku}</dd>
+                  </div>
+                  <div>
+                    <dt>{pick(locale, 'تكلفة الوحدة', 'Unit cost')}</dt>
+                    <dd>
+                      {link.cost_egp} {pick(locale, 'ج.م', 'EGP')}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
+            {!links.length && (
+              <p>
+                {pick(
+                  locale,
+                  'لا توجد مراجع موردين بعد',
+                  'No supplier references yet',
+                )}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-      <div className="panel" style={{ overflowX: 'auto', marginTop: 24 }}>
+      <div className="panel admin-supplier-section" style={{ marginTop: 24 }}>
         <h2>
           {pick(
             locale,
@@ -325,7 +386,7 @@ export default async function SuppliersPage({
             'PURCHASE ORDERS & RECEIVING',
           )}
         </h2>
-        <table className="data-table">
+        <table className="data-table admin-supplier-desktop-table">
           <thead>
             <tr>
               <th>{pick(locale, 'التاريخ', 'DATE')}</th>
@@ -349,7 +410,9 @@ export default async function SuppliersPage({
                         {new Date(order.created_at).toLocaleDateString(locale)}
                       </td>
                       <td>{supplierNames.get(order.supplier_id) || '—'}</td>
-                      <td>{order.status}</td>
+                      <td>
+                        <StatusBadge status={order.status} locale={locale} />
+                      </td>
                       <td>
                         {productNames.get(item.product_id) || item.product_id}{' '}
                         {item.variant_id
@@ -389,6 +452,83 @@ export default async function SuppliersPage({
             )}
           </tbody>
         </table>
+        <div className="admin-supplier-mobile-cards">
+          {orders.flatMap((order) =>
+            items
+              .filter((item) => item.purchase_order_id === order.id)
+              .map((item) => {
+                const remaining = item.quantity - item.received_quantity;
+                return (
+                  <article
+                    className="admin-mobile-data-card"
+                    key={`mobile-${item.id}`}
+                  >
+                    <header>
+                      <strong>
+                        {productNames.get(item.product_id) || item.product_id}
+                      </strong>
+                      <StatusBadge status={order.status} locale={locale} />
+                    </header>
+                    <dl>
+                      <div>
+                        <dt>{pick(locale, 'التاريخ', 'Date')}</dt>
+                        <dd>
+                          {new Date(order.created_at).toLocaleDateString(
+                            locale === 'ar' ? 'ar-EG' : 'en-GB',
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{pick(locale, 'المورد', 'Supplier')}</dt>
+                        <dd>{supplierNames.get(order.supplier_id) || '—'}</dd>
+                      </div>
+                      <div>
+                        <dt>{pick(locale, 'الكمية', 'Quantity')}</dt>
+                        <dd>
+                          {item.received_quantity} / {item.quantity}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{pick(locale, 'التكلفة', 'Cost')}</dt>
+                        <dd>
+                          {item.unit_cost_egp} {pick(locale, 'ج.م', 'EGP')}
+                        </dd>
+                      </div>
+                    </dl>
+                    {remaining > 0 && order.status !== 'cancelled' ? (
+                      <form
+                        action={receiveItem}
+                        className="admin-mobile-receive-form"
+                      >
+                        <input type="hidden" name="locale" value={locale} />
+                        <input type="hidden" name="item" value={item.id} />
+                        <label className="field-label">
+                          {pick(locale, 'كمية الاستلام', 'Receive quantity')}
+                          <input
+                            className="input"
+                            type="number"
+                            name="quantity"
+                            min="1"
+                            max={remaining}
+                            defaultValue={remaining}
+                            required
+                          />
+                        </label>
+                        <button className="button button-primary" type="submit">
+                          {pick(locale, 'استلام', 'Receive')}
+                        </button>
+                      </form>
+                    ) : null}
+                  </article>
+                );
+              }),
+          )}
+          {!items.length && (
+            <p>
+              {pick(locale, 'لا توجد أوامر شراء بعد', 'No purchase orders yet')}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

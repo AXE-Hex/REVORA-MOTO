@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, money, pick } from '@/lib/i18n';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { adminShipOrder, adminTransitionOrder } from '@/app/admin-actions';
 import { ConfirmSubmitButton } from '@/components/confirm-submit-button';
 
@@ -100,7 +101,7 @@ export default async function AdminOrderDetail({
       <div className="two-column">
         <section className="panel">
           <h2>{pick(locale, 'المنتجات', 'ITEMS')}</h2>
-          <div className="compare-scroll">
+          <div className="compare-scroll admin-order-items-desktop-table">
             <table className="data-table">
               <thead>
                 <tr>
@@ -127,6 +128,32 @@ export default async function AdminOrderDetail({
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="admin-order-items-mobile-cards">
+            {(itemsResult.data || []).map((item) => (
+              <article
+                className="admin-mobile-data-card"
+                key={`order-mobile-${item.id}`}
+              >
+                <h3>
+                  {pick(locale, item.name_ar_snapshot, item.name_en_snapshot)}
+                </h3>
+                <dl>
+                  <div>
+                    <dt>SKU</dt>
+                    <dd dir="ltr">{item.sku_snapshot}</dd>
+                  </div>
+                  <div>
+                    <dt>{pick(locale, 'الكمية', 'Quantity')}</dt>
+                    <dd>{item.quantity}</dd>
+                  </div>
+                  <div>
+                    <dt>{pick(locale, 'السعر', 'Price')}</dt>
+                    <dd>{money(item.total_egp, locale)}</dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
           </div>
           <div className="spec-row">
             <span>{pick(locale, 'المجموع الفرعي', 'SUBTOTAL')}</span>
@@ -162,13 +189,24 @@ export default async function AdminOrderDetail({
         </section>
         <section className="panel">
           <h2>{pick(locale, 'حالة الطلب', 'ORDER STATUS')}</h2>
-          <p className="status">{order.status}</p>
-          <p>
-            {pick(locale, 'الدفع', 'PAYMENT')}:{' '}
-            {paymentsResult.data
-              ?.map((p) => `${p.method} / ${p.status}`)
-              .join(', ') || '—'}
-          </p>
+          <StatusBadge status={order.status} locale={locale} />
+          <div className="payment-status-list">
+            <span>{pick(locale, 'الدفع', 'PAYMENT')}:</span>
+            {paymentsResult.data?.length ? (
+              paymentsResult.data.map((payment) => (
+                <span key={payment.id}>
+                  {payment.method === 'instapay'
+                    ? 'InstaPay'
+                    : locale === 'ar'
+                      ? 'بطاقة'
+                      : 'Card'}{' '}
+                  <StatusBadge status={payment.status} locale={locale} />
+                </span>
+              ))
+            ) : (
+              <span>—</span>
+            )}
+          </div>
           {invoiceResult.data && (
             <p>
               <Link
@@ -263,7 +301,7 @@ export default async function AdminOrderDetail({
           <h3>{pick(locale, 'سجل الطلب', 'ORDER HISTORY')}</h3>
           {(historyResult.data || []).map((entry) => (
             <div className="spec-row" key={entry.id}>
-              <span>{entry.status}</span>
+              <StatusBadge status={entry.status} locale={locale} />
               <small>{new Date(entry.created_at).toLocaleString(locale)}</small>
             </div>
           ))}

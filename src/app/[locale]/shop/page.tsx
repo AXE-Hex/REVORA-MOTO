@@ -5,6 +5,8 @@ import { ProductCard } from '@/components/cards';
 import { Empty } from '@/components/empty';
 import { isLocale, pick } from '@/lib/i18n';
 import { currentUser, supabase } from '@/lib/supabase/server';
+import { SearchBox } from '@/components/search-box';
+import { ShopFilters } from '@/components/shop-filters';
 export default async function Shop({
   params,
   searchParams,
@@ -139,112 +141,11 @@ export default async function Shop({
         </div>
       </section>
       <div className="shell section-small">
-        <form className="search-form" action={`/${locale}/shop`}>
-          <input
-            className="input"
-            name="q"
-            defaultValue={query.q || ''}
-            placeholder={pick(
-              locale,
-              'ابحث عن منتج أو رقم القطعة',
-              'Search products or SKU',
-            )}
-            aria-label={pick(locale, 'بحث', 'Search')}
-          />
-          <button className="button button-accent">
-            {pick(locale, 'بحث', 'SEARCH')}
-          </button>
-        </form>
-        <form className="toolbar" action={`/${locale}/shop`}>
-          {query.q && <input type="hidden" name="q" value={query.q} />}
-          {query.compatible === '1' && (
-            <input type="hidden" name="compatible" value="1" />
-          )}
-          <label>
-            {pick(locale, 'الفئة', 'Category')}
-            <select
-              className="input"
-              name="category"
-              defaultValue={query.category || ''}
-            >
-              <option value="">
-                {pick(locale, 'جميع الفئات', 'All categories')}
-              </option>
-              {cats.map((category) => (
-                <option key={category.id} value={category.slug}>
-                  {pick(locale, category.name_ar, category.name_en)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {pick(locale, 'العلامة التجارية', 'Brand')}
-            <select
-              className="input"
-              name="brand"
-              defaultValue={query.brand || ''}
-            >
-              <option value="">
-                {pick(locale, 'جميع العلامات', 'All brands')}
-              </option>
-              {brandList.map((brand) => (
-                <option key={brand.id} value={brand.slug}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {pick(locale, 'الترتيب', 'Sort')}
-            <select className="input" name="sort" defaultValue={sort}>
-              <option value="featured">
-                {pick(locale, 'المميز', 'Featured')}
-              </option>
-              <option value="newest">{pick(locale, 'الأحدث', 'Newest')}</option>
-              <option value="price_asc">
-                {pick(locale, 'السعر: الأقل أولاً', 'Price: low to high')}
-              </option>
-              <option value="price_desc">
-                {pick(locale, 'السعر: الأعلى أولاً', 'Price: high to low')}
-              </option>
-              <option value="name">{pick(locale, 'الاسم', 'Name')}</option>
-            </select>
-          </label>
-          <label>
-            {pick(locale, 'أقل سعر', 'Min EGP')}
-            <input
-              className="input"
-              name="min"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={query.min || ''}
-            />
-          </label>
-          <label>
-            {pick(locale, 'أعلى سعر', 'Max EGP')}
-            <input
-              className="input"
-              name="max"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={query.max || ''}
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="stock"
-              value="1"
-              defaultChecked={query.stock === '1'}
-            />{' '}
-            {pick(locale, 'المتاح فقط', 'In stock only')}
-          </label>
-          <button className="button button-ghost" type="submit">
-            {pick(locale, 'تطبيق', 'Apply')}
-          </button>
-        </form>
+        <SearchBox
+          locale={locale}
+          action={`/${locale}/shop`}
+          initial={query.q || ''}
+        />
         <div className="toolbar" style={{ overflowX: 'auto' }}>
           <Link
             className={`chip ${!query.category ? 'active' : ''}`}
@@ -291,47 +192,66 @@ export default async function Shop({
             </Link>
           </p>
         ) : null}
-        {items.length ? (
-          <div className="card-grid product-grid">
-            {items.map((item) => (
-              <ProductCard
-                key={item.id}
-                item={item}
-                locale={locale}
-                fitment={
-                  active && fitmentProducts.has(item.id)
-                    ? matchingIds.has(item.id)
-                      ? 'compatible'
-                      : 'incompatible'
-                    : 'unknown'
-                }
-              />
-            ))}
+        <div className="shop-catalog-layout">
+          <aside className="shop-filter-sidebar">
+            <ShopFilters
+              locale={locale}
+              q={query.q}
+              compatible={query.compatible}
+              category={query.category}
+              brand={query.brand}
+              sort={sort}
+              min={query.min}
+              max={query.max}
+              stock={query.stock}
+              categories={cats}
+              brands={brandList}
+            />
+          </aside>
+          <div className="shop-results">
+            {items.length ? (
+              <div className="card-grid product-grid">
+                {items.map((item) => (
+                  <ProductCard
+                    key={item.id}
+                    item={item}
+                    locale={locale}
+                    fitment={
+                      active && fitmentProducts.has(item.id)
+                        ? matchingIds.has(item.id)
+                          ? 'compatible'
+                          : 'incompatible'
+                        : 'unknown'
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <Empty locale={locale} />
+            )}
+            {total > pageSize && (
+              <nav
+                className="toolbar"
+                aria-label={pick(locale, 'صفحات المنتجات', 'Product pages')}
+              >
+                {page > 1 && (
+                  <Link className="chip" href={pageHref(page - 1)}>
+                    {pick(locale, 'السابق', 'PREVIOUS')}
+                  </Link>
+                )}
+                <span aria-current="page">
+                  {pick(locale, 'صفحة', 'Page')} {page} /{' '}
+                  {Math.ceil(total / pageSize)}
+                </span>
+                {page * pageSize < total && (
+                  <Link className="chip" href={pageHref(page + 1)}>
+                    {pick(locale, 'التالي', 'NEXT')}
+                  </Link>
+                )}
+              </nav>
+            )}
           </div>
-        ) : (
-          <Empty locale={locale} />
-        )}
-        {total > pageSize && (
-          <nav
-            className="toolbar"
-            aria-label={pick(locale, 'صفحات المنتجات', 'Product pages')}
-          >
-            {page > 1 && (
-              <Link className="chip" href={pageHref(page - 1)}>
-                {pick(locale, 'السابق', 'PREVIOUS')}
-              </Link>
-            )}
-            <span aria-current="page">
-              {pick(locale, 'صفحة', 'Page')} {page} /{' '}
-              {Math.ceil(total / pageSize)}
-            </span>
-            {page * pageSize < total && (
-              <Link className="chip" href={pageHref(page + 1)}>
-                {pick(locale, 'التالي', 'NEXT')}
-              </Link>
-            )}
-          </nav>
-        )}
+        </div>
       </div>
     </>
   );

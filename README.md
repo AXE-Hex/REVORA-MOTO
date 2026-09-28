@@ -1,6 +1,6 @@
 # REVORA MOTO
 
-Arabic and English motorcycle marketplace and gear store using Next.js App Router and Supabase. This is an **in-progress implementation** of [`Web`](./Web), continued under [`Web2`](./Web2). It is **not production ready**.
+Arabic and English motorcycle marketplace and gear store using Next.js App Router and Supabase. This is an **in-progress implementation** of [`Web`](./Web), continued under [`Web2`](./Web2). It is **not production ready**. The verified matrix and concrete gaps are in [`IMPLEMENTATION_AUDIT.md`](./IMPLEMENTATION_AUDIT.md).
 
 ## Run locally
 
@@ -28,10 +28,12 @@ The SQL runner requires a running **local** Supabase database and rolls back eac
 
 ## Current scope
 
-- Public bilingual catalog, motorcycle comparison, fitment, active My Garage, search, cart, variant checkout, reservations and customer account pages.
+- Public bilingual catalog, paginated search, motorcycle comparison, fitment, active My Garage, cart, variant checkout, reservations and customer account controls.
 - Customer returns and warranty claims, staff inventory/purchasing, promotions, catalog/vehicle editing, sales transitions, moderation, staff permissions and real-data reports.
 - Permission-gated customer directory, audit log and safe site settings; paginated catalogs, enhanced motorcycle gallery and database-derived structured data.
 - Supabase RLS and server-side transaction RPCs for privileged stock, price, deposit, discount, status and case changes.
-- Pending payment architecture. The user has deferred choosing an Egyptian gateway, so card/InstaPay captures and external refunds remain unavailable. Email notifications enter an outbox but are not delivered.
+- Payment/refund records, idempotent event history and provider-independent webhook contracts exist. The user has deferred choosing an Egyptian gateway, so live card/InstaPay captures and external refunds remain blocked. Email delivery requires provider credentials and domain configuration.
+
+The app still has partial operational workflows and has not passed the complete accessibility, localization, Admin or production security review. Passing tests and builds do not mean it is approved for production.
 
 Read [`AGENT_STATUS.md`](./AGENT_STATUS.md) for each major feature's status, [`CLOUD_SETUP.md`](./CLOUD_SETUP.md) for the linked cloud project, and [`DEPLOYMENT.md`](./DEPLOYMENT.md) for release prerequisites.

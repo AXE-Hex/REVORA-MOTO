@@ -2,8 +2,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight, Gauge, CalendarDays } from 'lucide-react';
 import type { Locale } from '@/lib/i18n';
-import { money, pick } from '@/lib/i18n';
+import { pick } from '@/lib/i18n';
 import type { Motorcycle, Product } from '@/lib/catalog';
+import {
+  BadgeStrip,
+  CommerceBadge,
+  PriceBlock,
+} from '@/components/ui/commerce';
 
 function Photo({ src, alt }: { src: string | null; alt: string }) {
   return src ? (
@@ -32,11 +37,19 @@ export function MotorcycleCard({
     <Link href={`/${locale}/motorcycles/${item.slug}`} className="catalog-card">
       <div className="card-image">
         <Photo src={item.image_url} alt={name} />
-        <span className="card-tag">
-          {item.condition === 'new'
-            ? pick(locale, 'جديد', 'NEW')
-            : pick(locale, 'مستعمل', 'PRE-OWNED')}
-        </span>
+        <BadgeStrip
+          className="badge-strip-card"
+          label={pick(locale, 'حالة الدراجة', 'Motorcycle status')}
+        >
+          {item.availability === 'reserved' ? (
+            <CommerceBadge kind="reserved" locale={locale} />
+          ) : (
+            <CommerceBadge
+              kind={item.condition === 'new' ? 'new' : 'used'}
+              locale={locale}
+            />
+          )}
+        </BadgeStrip>
         {item.is_demo && (
           <span className="demo-tag">{pick(locale, 'تجريبي', 'DEMO')}</span>
         )}
@@ -59,10 +72,7 @@ export function MotorcycleCard({
           )}
         </div>
         <div className="card-bottom">
-          <div>
-            <small>{pick(locale, 'السعر', 'PRICE')}</small>
-            <strong>{money(item.price_egp, locale)}</strong>
-          </div>
+          <PriceBlock price={item.price_egp} locale={locale} />
           <span className="circle-arrow">
             <ArrowUpRight size={20} />
           </span>
@@ -85,7 +95,24 @@ export function ProductCard({
     <Link href={`/${locale}/shop/${item.slug}`} className="catalog-card">
       <div className="card-image">
         <Photo src={item.image_url} alt={name} />
-        {item.sale_price_egp && <span className="card-tag sale">SALE</span>}
+        <BadgeStrip
+          className="badge-strip-card"
+          label={pick(locale, 'حالة المنتج', 'Product status')}
+        >
+          {item.stock <= 0 ? (
+            <CommerceBadge kind="out-of-stock" locale={locale} />
+          ) : item.sale_price_egp != null &&
+            item.sale_price_egp < item.price_egp ? (
+            <CommerceBadge
+              kind="discount"
+              locale={locale}
+              value={
+                Math.round((1 - item.sale_price_egp / item.price_egp) * 1000) /
+                10
+              }
+            />
+          ) : null}
+        </BadgeStrip>
         {item.is_demo && (
           <span className="demo-tag">{pick(locale, 'تجريبي', 'DEMO')}</span>
         )}
@@ -101,12 +128,11 @@ export function ProductCard({
         <div className="card-kicker">{item.sku}</div>
         <h3>{name}</h3>
         <div className="card-bottom">
-          <div>
-            <small>{pick(locale, 'السعر', 'PRICE')}</small>
-            <strong>
-              {money(item.sale_price_egp || item.price_egp, locale)}
-            </strong>
-          </div>
+          <PriceBlock
+            price={item.sale_price_egp ?? item.price_egp}
+            originalPrice={item.sale_price_egp}
+            locale={locale}
+          />
           <span className="circle-arrow">
             <ArrowUpRight size={20} />
           </span>

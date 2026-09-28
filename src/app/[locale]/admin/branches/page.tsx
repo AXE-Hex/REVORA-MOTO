@@ -19,7 +19,7 @@ export default async function AdminBranches({
     p_permission: 'motorcycles.write',
   });
   if (!allowed) notFound();
-  const { data: branches } = await db!
+  const { data: branches, error: listError } = await db!
     .from('branches')
     .select('id,name_ar,name_en,address_ar,address_en,active')
     .order('name_en');
@@ -44,12 +44,26 @@ export default async function AdminBranches({
       <div className="two-column">
         <div className="panel">
           <h2>{pick(locale, 'الفروع', 'BRANCHES')}</h2>
+          {listError && (
+            <p className="notice error" role="alert">
+              {pick(locale, 'تعذر تحميل القائمة', 'Could not load the list')}
+            </p>
+          )}
+          {!listError && !(branches || []).length && (
+            <p className="admin-empty-table">
+              {pick(locale, 'لا توجد عناصر بعد.', 'No entries yet.')}
+            </p>
+          )}
           {(branches || []).map((branch) => (
             <div className="spec-row" key={branch.id}>
               <Link href={`/${locale}/admin/branches?edit=${branch.id}`}>
                 {pick(locale, branch.name_ar, branch.name_en)}
               </Link>
-              <span>{branch.active ? 'active' : 'inactive'}</span>
+              <span>
+                {branch.active
+                  ? pick(locale, 'نشط', 'Active')
+                  : pick(locale, 'غير نشط', 'Inactive')}
+              </span>
             </div>
           ))}
         </div>
@@ -102,8 +116,10 @@ export default async function AdminBranches({
               name="active"
               defaultValue={selected?.active === false ? 'false' : 'true'}
             >
-              <option value="true">active</option>
-              <option value="false">inactive</option>
+              <option value="true">{pick(locale, 'نشط', 'Active')}</option>
+              <option value="false">
+                {pick(locale, 'غير نشط', 'Inactive')}
+              </option>
             </select>
           </label>
           <button className="button button-accent" type="submit">

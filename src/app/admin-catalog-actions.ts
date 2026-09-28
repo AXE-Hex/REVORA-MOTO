@@ -70,6 +70,21 @@ export async function saveProduct(form: FormData) {
   redirect(`/${input.locale}/admin/products?saved=1`);
 }
 
+export async function archiveProduct(form: FormData) {
+  const parsed = z
+    .object({ locale, id: uuid })
+    .safeParse(Object.fromEntries(form));
+  if (!parsed.success) redirect('/ar/admin/products?error=invalid');
+  const { locale: lang, id } = parsed.data;
+  const db = await catalogDb(lang);
+  const { error } = await db
+    .from('products')
+    .update({ status: 'archived' })
+    .eq('id', id);
+  if (error) redirect(`/${lang}/admin/products?error=archive`);
+  redirect(`/${lang}/admin/products?saved=archived`);
+}
+
 export async function saveVariant(form: FormData) {
   const parsed = z
     .object({

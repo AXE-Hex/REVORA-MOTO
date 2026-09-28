@@ -71,10 +71,9 @@ do $$begin
 end$$;
 
 -- Checkout reserves location stock without moving physical stock.
-insert into public.addresses(id,user_id,name,line1,city,governorate,phone)
-values('44444444-4444-4444-8444-444444444444',auth.uid(),'Warehouse','1 Test Street','Cairo','Cairo','01000000000');
+select public.save_customer_address(null,'Warehouse','1 Test Street',null,'Cairo','Cairo','01000000000',true) as inventory_address_id \gset
 select public.add_cart_item((select id from public.products where sku='HLM-001'),1);
-select public.place_order('44444444-4444-4444-8444-444444444444','card');
+select public.place_order(:'inventory_address_id','card');
 do $$begin
   if not exists(select 1 from public.order_stock_allocations where status='reserved') then raise exception 'Checkout reservation missing';end if;
   if (select sum(reserved) from public.inventory where product_id=(select id from public.products where sku='HLM-001') and variant_id is null)<>1 then raise exception 'Location reservation missing';end if;

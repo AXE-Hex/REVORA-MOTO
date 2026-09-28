@@ -58,7 +58,7 @@ export const copy = {
     compare: 'Compare',
   },
 };
-export function money(
+export function formatCurrency(
   egp: number,
   locale: Locale,
   currency: 'EGP' | 'USD' = 'EGP',
@@ -72,3 +72,5 @@ export function money(
     maximumFractionDigits: 2,
   }).format(value);
 }
+
+export const money = formatCurrency;

@@ -1,12 +1,39 @@
 begin;
 do $$begin
+  if has_function_privilege('anon','public.claim_notification_emails(integer)','EXECUTE') then
+    raise exception 'Anonymous user can claim email addresses';
+  end if;
   if has_function_privilege('authenticated','public.claim_notification_emails(integer)','EXECUTE') then
     raise exception 'Customer can claim email addresses';
+  end if;
+  if has_function_privilege('anon','public.finish_notification_email(uuid,uuid,boolean,text,text)','EXECUTE') then
+    raise exception 'Anonymous user can acknowledge email delivery';
   end if;
   if has_function_privilege('authenticated','public.finish_notification_email(uuid,uuid,boolean,text,text)','EXECUTE') then
     raise exception 'Customer can acknowledge email delivery';
   end if;
+  if not has_function_privilege('service_role','public.claim_notification_emails(integer)','EXECUTE') then
+    raise exception 'Service role cannot claim email';
+  end if;
+  if not has_function_privilege('service_role','public.finish_notification_email(uuid,uuid,boolean,text,text)','EXECUTE') then
+    raise exception 'Service role cannot acknowledge email';
+  end if;
 end$$;
+
+set local role anon;
+do $$begin
+  begin
+    perform * from public.claim_notification_emails(1);
+    raise exception 'Anonymous claim unexpectedly succeeded';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.finish_notification_email(gen_random_uuid(),gen_random_uuid(),true,'provider',null);
+    raise exception 'Anonymous acknowledgement unexpectedly succeeded';
+  exception when insufficient_privilege then null;
+  end;
+end$$;
+reset role;
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
 values('8c8c8c8c-8c8c-48c8-88c8-8c8c8c8c8c8c','00000000-0000-0000-0000-000000000000',

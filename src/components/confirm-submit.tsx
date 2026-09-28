@@ -12,7 +12,7 @@ export function ConfirmSubmit({
   const { pending } = useFormStatus();
   return (
     <button
-      className="button button-ghost"
+      className="button button-danger-soft"
       type="submit"
       disabled={pending}
       onClick={(event) => {

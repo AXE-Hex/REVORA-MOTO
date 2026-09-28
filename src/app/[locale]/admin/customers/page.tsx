@@ -67,7 +67,10 @@ export default async function AdminCustomers({
           {pick(locale, 'تعذر تحميل العملاء', 'Could not load customers')}
         </p>
       )}
-      <div className="panel" style={{ overflowX: 'auto', marginTop: 20 }}>
+      <div
+        className="panel admin-customers-table"
+        style={{ overflowX: 'auto', marginTop: 20 }}
+      >
         <table className="data-table">
           <thead>
             <tr>
@@ -99,6 +102,36 @@ export default async function AdminCustomers({
         {!customers.length && !error && (
           <p>{pick(locale, 'لا يوجد عملاء', 'No customers')}</p>
         )}
+      </div>
+      <div className="admin-customer-mobile-list">
+        {customers.map((customer) => (
+          <article
+            className="admin-customer-mobile-card panel"
+            key={customer.user_id}
+          >
+            <h2>{customer.full_name || pick(locale, 'عميل', 'Customer')}</h2>
+            <p dir="ltr">{customer.email}</p>
+            {customer.phone && <p dir="ltr">{customer.phone}</p>}
+            <dl>
+              <div>
+                <dt>{pick(locale, 'الطلبات', 'Orders')}</dt>
+                <dd>{customer.order_count}</dd>
+              </div>
+              <div>
+                <dt>{pick(locale, 'الحجوزات', 'Reservations')}</dt>
+                <dd>{customer.reservation_count}</dd>
+              </div>
+              <div>
+                <dt>{pick(locale, 'تاريخ التسجيل', 'Joined')}</dt>
+                <dd>
+                  {new Date(customer.joined_at).toLocaleDateString(
+                    locale === 'ar' ? 'ar-EG' : 'en-GB',
+                  )}
+                </dd>
+              </div>
+            </dl>
+          </article>
+        ))}
       </div>
       <div className="toolbar" style={{ marginTop: 20 }}>
         {page > 1 && (

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
+import { StatusBadge, localizedStatus } from '@/components/ui/status-badge';
 import { advanceWarrantyClaim } from '@/app/admin-service-actions';
 
 const nextStatus: Record<string, string[]> = {
@@ -55,7 +56,8 @@ export default async function AdminWarranties({
       {(claims || []).map((claim) => (
         <div className="panel" key={claim.id} style={{ marginBottom: 16 }}>
           <h2>
-            {claim.id.slice(0, 8)} · {claim.status}
+            {claim.id.slice(0, 8)} ·{' '}
+            <StatusBadge status={claim.status} locale={locale} />
           </h2>
           <p>{claim.details}</p>
           {claim.admin_notes && (
@@ -81,8 +83,11 @@ export default async function AdminWarranties({
                   maxLength={2000}
                   placeholder={pick(locale, 'ملاحظات الإدارة', 'Admin notes')}
                 />
-                <button className="button button-ghost" type="submit">
-                  {status}
+                <button
+                  className={`button ${['approved', 'completed'].includes(status) ? 'button-success' : status === 'rejected' ? 'button-danger' : 'button-secondary'}`}
+                  type="submit"
+                >
+                  {localizedStatus(status, locale)}
                 </button>
               </form>
             ))}

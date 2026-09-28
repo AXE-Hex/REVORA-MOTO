@@ -11,8 +11,8 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','51111111-1111-4111-8111-111111111111',true);
 select public.admin_set_checkout_rates(25.00,10.00);
 select set_config('request.jwt.claim.sub','52222222-2222-4222-8222-222222222222',true);
-insert into public.addresses(id,user_id,name,line1,city,governorate,phone)
-values('54444444-4444-4444-8444-444444444444',auth.uid(),'Home','12 Test Street','Cairo','Cairo','01000000000');
+select public.save_customer_address(null,'Home','12 Test Street',null,'Cairo','Cairo','01000000000',true) as fulfillment_address_id \gset
+select set_config('test.fulfillment_address',:'fulfillment_address_id',true);
 select public.add_cart_item((select id from public.products where sku='HLM-001'),1);
 do $$declare v_quote jsonb;begin
   v_quote:=public.quote_cart();
@@ -21,11 +21,11 @@ do $$declare v_quote jsonb;begin
     (v_quote->>'total_egp')::numeric<>(v_quote->>'subtotal_egp')::numeric+(v_quote->>'tax_egp')::numeric+25
   then raise exception 'Authoritative checkout charges wrong'; end if;
 end$$;
-select public.place_order('54444444-4444-4444-8444-444444444444','card',null,
+select public.place_order(:'fulfillment_address_id','card',null,
   '55555555-5555-4555-8555-555555555555') as order_id \gset
 select set_config('test.fulfillment_order',:'order_id',true);
 do $$begin
-  if public.place_order('54444444-4444-4444-8444-444444444444','card',null,
+  if public.place_order(current_setting('test.fulfillment_address')::uuid,'card',null,
     '55555555-5555-4555-8555-555555555555')<>current_setting('test.fulfillment_order')::uuid
     then raise exception 'Repeated checkout did not return same order'; end if;
   if (select count(*) from public.orders where user_id=auth.uid())<>1
@@ -100,7 +100,7 @@ do $$begin
 end$$;
 select set_config('request.jwt.claim.sub','52222222-2222-4222-8222-222222222222',true);
 select public.add_cart_item((select id from public.products where sku='HLM-001'),1);
-select public.place_order('54444444-4444-4444-8444-444444444444','card') as expiring_order \gset
+select public.place_order(:'fulfillment_address_id','card') as expiring_order \gset
 select set_config('test.expiring_order',:'expiring_order',true);
 reset role;
 update public.orders set expires_at=now()-interval '1 second' where id=:'expiring_order';
@@ -124,7 +124,7 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','52222222-2222-4222-8222-222222222222',true);
 select public.add_cart_item((select id from public.products where sku='HLM-001'),1);
-select public.place_order('54444444-4444-4444-8444-444444444444','card') as own_cancel_order \gset
+select public.place_order(:'fulfillment_address_id','card') as own_cancel_order \gset
 select set_config('test.own_cancel_order',:'own_cancel_order',true);
 select public.cancel_own_unpaid_order(:'own_cancel_order');
 do $$begin

@@ -34,10 +34,7 @@ export async function adjustStock(form: FormData) {
     p_delta: delta,
     p_reason: reason,
   });
-  if (error)
-    redirect(
-      `/${locale}/admin/inventory?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/inventory?error=operation`);
   revalidatePath(`/${locale}/admin/inventory`);
   redirect(`/${locale}/admin/inventory?success=adjusted`);
 }
@@ -58,10 +55,7 @@ export async function transferStock(form: FormData) {
     p_quantity: quantity,
     p_reason: reason,
   });
-  if (error)
-    redirect(
-      `/${locale}/admin/inventory?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/inventory?error=operation`);
   revalidatePath(`/${locale}/admin/inventory`);
   redirect(`/${locale}/admin/inventory?success=transferred`);
 }
@@ -77,10 +71,7 @@ export async function createWarehouse(form: FormData) {
   const { locale, name } = parsed.data;
   const db = await staffDb(locale);
   const { error } = await db.from('warehouses').insert({ name });
-  if (error)
-    redirect(
-      `/${locale}/admin/inventory?error=${encodeURIComponent(error.message)}`,
-    );
+  if (error) redirect(`/${locale}/admin/inventory?error=operation`);
   revalidatePath(`/${locale}/admin/inventory`);
   redirect(`/${locale}/admin/inventory?success=warehouse`);
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, money, pick } from '@/lib/i18n';
+import { operationFailed } from '@/lib/action-feedback';
 import { savePromotion, togglePromotion } from './actions';
 
 type Promotion = {
@@ -289,7 +290,7 @@ export default async function PromotionsAdmin({
       <h1 className="page-title">
         {pick(locale, 'إدارة العروض', 'PROMOTIONS')}
       </h1>
-      {error && <p className="notice error">{error}</p>}
+      {error && <p className="notice error">{operationFailed(locale)}</p>}
       {saved && (
         <p className="notice">
           {pick(locale, 'تم حفظ العرض.', 'Promotion saved.')}
@@ -352,9 +353,9 @@ export default async function PromotionsAdmin({
           );
         })}
       </div>
-      <div className="panel" style={{ marginTop: 30 }}>
+      <div className="panel admin-promotion-usage" style={{ marginTop: 30 }}>
         <h2>{pick(locale, 'سجل الاستخدام الأخير', 'RECENT USAGE')}</h2>
-        <table className="data-table">
+        <table className="data-table admin-promotion-usage-table">
           <thead>
             <tr>
               <th>{pick(locale, 'العرض', 'PROMOTION')}</th>
@@ -379,9 +380,34 @@ export default async function PromotionsAdmin({
             ))}
           </tbody>
         </table>
-        {!usageResult.data?.length && (
-          <p>{pick(locale, 'لا يوجد استخدام بعد.', 'No usage yet.')}</p>
-        )}
+        <div className="admin-promotion-usage-cards">
+          {usageResult.data?.map((use) => (
+            <article className="admin-mobile-data-card" key={`usage-${use.id}`}>
+              <h3>
+                {promotions.find(
+                  (promotion) => promotion.id === use.promotion_id,
+                )?.name || use.promotion_id}
+              </h3>
+              <dl>
+                <div>
+                  <dt>{pick(locale, 'الطلب', 'Order')}</dt>
+                  <dd dir="ltr">{use.order_id}</dd>
+                </div>
+                <div>
+                  <dt>{pick(locale, 'التاريخ', 'Date')}</dt>
+                  <dd>
+                    {new Date(use.used_at).toLocaleString(
+                      locale === 'ar' ? 'ar-EG' : 'en-GB',
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+          {!usageResult.data?.length && (
+            <p>{pick(locale, 'لا يوجد استخدام بعد.', 'No usage yet.')}</p>
+          )}
+        </div>
       </div>
     </div>
   );

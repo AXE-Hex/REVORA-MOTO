@@ -15,10 +15,9 @@ do $$begin
   end;
 end$$;
 select set_config('request.jwt.claim.sub','41111111-1111-4111-8111-111111111111',true);
-insert into public.addresses(id,user_id,name,line1,city,governorate,phone)
-values('43333333-3333-4333-8333-333333333333',auth.uid(),'Staff test','12 Test Street','Cairo','Cairo','01000000000');
+select public.save_customer_address(null,'Staff test','12 Test Street',null,'Cairo','Cairo','01000000000',true) as sales_address_id \gset
 select public.add_cart_item(id,1) from public.products where sku='HLM-001';
-select public.place_order('43333333-3333-4333-8333-333333333333','card') as sales_order \gset
+select public.place_order(:'sales_address_id','card') as sales_order \gset
 select set_config('test.sales_order',:'sales_order',true);
 do $$begin
   begin

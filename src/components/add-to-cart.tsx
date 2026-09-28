@@ -4,6 +4,8 @@ import { ShoppingBag } from 'lucide-react';
 import { addToCart } from '@/app/actions';
 import type { Locale } from '@/lib/i18n';
 import { money, pick } from '@/lib/i18n';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast-provider';
 type Variant = {
   id: string;
   sku: string;
@@ -23,7 +25,7 @@ export function AddToCart({
   variants?: Variant[];
 }) {
   const [pending, start] = useTransition();
-  const [message, setMessage] = useState('');
+  const { showToast } = useToast();
   const [variant, setVariant] = useState(
     variants.find((v) => v.stock > 0)?.id || '',
   );
@@ -41,37 +43,40 @@ export function AddToCart({
               <option key={v.id} value={v.id} disabled={v.stock < 1}>
                 {Object.values(v.attributes).join(' / ') || v.sku} —{' '}
                 {money(v.price_egp, locale)}{' '}
-                {v.stock < 1 ? '(Out of stock)' : ''}
+                {v.stock < 1
+                  ? `(${pick(locale, 'غير متوفر', 'Out of stock')})`
+                  : ''}
               </option>
             ))}
           </select>
         </label>
       )}
-      <button
+      <Button
+        variant="primary"
         disabled={disabled || pending || (variants.length > 0 && !variant)}
-        className="button button-accent"
+        loading={pending}
+        loadingLabel={pick(locale, 'جارٍ الإضافة...', 'Adding...')}
         onClick={() =>
           start(async () => {
             const result = await addToCart(id, locale, variant || undefined);
-            setMessage(
-              result.error || pick(locale, 'أضيف إلى السلة', 'Added to cart'),
+            showToast(
+              result.error
+                ? { kind: 'error', message: result.error }
+                : {
+                    kind: 'success',
+                    message: pick(
+                      locale,
+                      'أضيف المنتج إلى السلة',
+                      'Added to cart',
+                    ),
+                  },
             );
           })
         }
       >
         <ShoppingBag size={18} />
-        {pending
-          ? pick(locale, 'جارٍ الإضافة...', 'ADDING...')
-          : pick(locale, 'أضف للسلة', 'ADD TO CART')}
-      </button>
-      {message && (
-        <p
-          role="status"
-          className={message.includes('sign') ? 'notice error' : 'notice'}
-        >
-          {message}
-        </p>
-      )}
+        {pick(locale, 'أضف للسلة', 'ADD TO CART')}
+      </Button>
     </>
   );
 }

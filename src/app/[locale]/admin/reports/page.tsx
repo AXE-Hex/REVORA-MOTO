@@ -40,6 +40,54 @@ export default async function AdminReports({
   const { data, error } = await db!.rpc('admin_report');
   if (error || !data) notFound();
   const report = data as Report;
+  const [productNamesResult, categoryNamesResult, motorcycleNamesResult] =
+    await Promise.all([
+      report.best_selling_products?.length
+        ? db!
+            .from('products')
+            .select('id,name_ar,name_en')
+            .in(
+              'id',
+              report.best_selling_products.map((item) => item.product_id),
+            )
+        : Promise.resolve({ data: [] }),
+      report.best_categories?.length
+        ? db!
+            .from('categories')
+            .select('id,name_ar,name_en')
+            .in(
+              'id',
+              report.best_categories.map((item) => item.id),
+            )
+        : Promise.resolve({ data: [] }),
+      report.popular_motorcycles?.length
+        ? db!
+            .from('motorcycles')
+            .select('id,name_ar,name_en')
+            .in(
+              'id',
+              report.popular_motorcycles.map((item) => item.id),
+            )
+        : Promise.resolve({ data: [] }),
+    ]);
+  const productNames = new Map(
+    (productNamesResult.data || []).map((item) => [
+      item.id,
+      pick(locale, item.name_ar, item.name_en),
+    ]),
+  );
+  const categoryNames = new Map(
+    (categoryNamesResult.data || []).map((item) => [
+      item.id,
+      pick(locale, item.name_ar, item.name_en),
+    ]),
+  );
+  const motorcycleNames = new Map(
+    (motorcycleNamesResult.data || []).map((item) => [
+      item.id,
+      pick(locale, item.name_ar, item.name_en),
+    ]),
+  );
   const metrics: [string, string][] = [
     [
       pick(locale, 'إيرادات الطلبات المؤكدة', 'CAPTURED ORDER REVENUE'),
@@ -109,29 +157,78 @@ export default async function AdminReports({
           </div>
         ))}
       </div>
-      <div className="panel" style={{ marginTop: 28 }}>
+      <div className="panel admin-report-chart" style={{ marginTop: 28 }}>
         <h2>
           {pick(locale, 'المنتجات الأكثر مبيعاً', 'BEST SELLING PRODUCTS')}
         </h2>
-        {(report.best_selling_products || []).map((item) => (
-          <div className="spec-row" key={item.product_id}>
-            <span>{item.name_en}</span>
-            <strong>{item.units}</strong>
-          </div>
-        ))}
+        <ol className="admin-chart-list">
+          {(report.best_selling_products || []).map((item) => {
+            const max = Math.max(
+              1,
+              ...(report.best_selling_products || []).map(
+                (product) => product.units,
+              ),
+            );
+            return (
+              <li key={item.product_id}>
+                <span>{productNames.get(item.product_id) || item.name_en}</span>
+                <span className="admin-chart-track" aria-hidden="true">
+                  <i
+                    style={{
+                      width: `${Math.max(4, (item.units / max) * 100)}%`,
+                    }}
+                  />
+                </span>
+                <strong
+                  aria-label={`${item.units} ${pick(locale, 'وحدة', 'units')}`}
+                >
+                  {item.units}
+                </strong>
+              </li>
+            );
+          })}
+        </ol>
         {!report.best_selling_products?.length && (
           <p>{pick(locale, 'لا توجد مبيعات مؤكدة', 'No captured sales yet')}</p>
         )}
       </div>
+      <p className="admin-data-caption">
+        {pick(
+          locale,
+          'تعرض الرسوم التجميعات التي يوفرها تقرير المتجر الحالي؛ لا يتوفر تجميع يومي أو اختيار فترة زمنية في قاعدة البيانات.',
+          'Charts use aggregates provided by the current store report; daily trends and date-range selection are not available in the database.',
+        )}
+      </p>
       <div className="two-column" style={{ marginTop: 16 }}>
         <div className="panel">
           <h2>{pick(locale, 'الفئات الأكثر مبيعاً', 'BEST CATEGORIES')}</h2>
-          {(report.best_categories || []).map((item) => (
-            <div className="spec-row" key={item.id}>
-              <span>{item.name_en}</span>
-              <strong>{item.units}</strong>
-            </div>
-          ))}
+          <ol className="admin-chart-list">
+            {(report.best_categories || []).map((item) => {
+              const max = Math.max(
+                1,
+                ...(report.best_categories || []).map(
+                  (category) => category.units,
+                ),
+              );
+              return (
+                <li key={item.id}>
+                  <span>{categoryNames.get(item.id) || item.name_en}</span>
+                  <span className="admin-chart-track" aria-hidden="true">
+                    <i
+                      style={{
+                        width: `${Math.max(4, (item.units / max) * 100)}%`,
+                      }}
+                    />
+                  </span>
+                  <strong
+                    aria-label={`${item.units} ${pick(locale, 'وحدة', 'units')}`}
+                  >
+                    {item.units}
+                  </strong>
+                </li>
+              );
+            })}
+          </ol>
           {!report.best_categories?.length && (
             <p>
               {pick(locale, 'لا توجد مبيعات مؤكدة', 'No captured sales yet')}
@@ -142,12 +239,33 @@ export default async function AdminReports({
           <h2>
             {pick(locale, 'الدراجات الأكثر طلباً', 'POPULAR MOTORCYCLES')}
           </h2>
-          {(report.popular_motorcycles || []).map((item) => (
-            <div className="spec-row" key={item.id}>
-              <span>{item.name_en}</span>
-              <strong>{item.reservations}</strong>
-            </div>
-          ))}
+          <ol className="admin-chart-list">
+            {(report.popular_motorcycles || []).map((item) => {
+              const max = Math.max(
+                1,
+                ...(report.popular_motorcycles || []).map(
+                  (motorcycle) => motorcycle.reservations,
+                ),
+              );
+              return (
+                <li key={item.id}>
+                  <span>{motorcycleNames.get(item.id) || item.name_en}</span>
+                  <span className="admin-chart-track" aria-hidden="true">
+                    <i
+                      style={{
+                        width: `${Math.max(4, (item.reservations / max) * 100)}%`,
+                      }}
+                    />
+                  </span>
+                  <strong
+                    aria-label={`${item.reservations} ${pick(locale, 'حجز', 'reservations')}`}
+                  >
+                    {item.reservations}
+                  </strong>
+                </li>
+              );
+            })}
+          </ol>
           {!report.popular_motorcycles?.length && (
             <p>{pick(locale, 'لا توجد حجوزات', 'No reservations yet')}</p>
           )}

@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { arabicUi, bodyEnglish, displayEnglish } from './fonts';
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
@@ -14,7 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html suppressHydrationWarning>
-      <body>{children}</body>
+      <body
+        className={`${displayEnglish.variable} ${bodyEnglish.variable} ${arabicUi.variable}`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

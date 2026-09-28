@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, money, pick } from '@/lib/i18n';
+import { StatusBadge, localizedStatus } from '@/components/ui/status-badge';
 import { advanceReturn } from '@/app/admin-service-actions';
 import { StartRefund } from '@/components/start-refund';
 import { adminRetryRefund } from '@/app/admin-actions';
@@ -74,7 +75,8 @@ export default async function AdminReturns({
       {(cases || []).map((entry) => (
         <div className="panel" key={entry.id} style={{ marginBottom: 16 }}>
           <h2>
-            {entry.id.slice(0, 8)} · {entry.status}
+            {entry.id.slice(0, 8)} ·{' '}
+            <StatusBadge status={entry.status} locale={locale} />
           </h2>
           <p>{entry.reason}</p>
           {entry.customer_notes && <p>{entry.customer_notes}</p>}
@@ -93,7 +95,12 @@ export default async function AdminReturns({
           {entry.status === 'refund_pending' && (
             <div className="notice">
               {pick(locale, 'حالة طلب الاسترداد', 'Refund request status')}:{' '}
-              {refundByReturn.get(entry.id)?.status || 'provider_required'}
+              <StatusBadge
+                status={
+                  refundByReturn.get(entry.id)?.status || 'provider_required'
+                }
+                locale={locale}
+              />
               {canWrite &&
                 canReadPayments &&
                 refundByReturn.get(entry.id)?.status === 'provider_required' &&
@@ -152,8 +159,11 @@ export default async function AdminReturns({
                     )}
                   />
                 )}
-                <button className="button button-ghost" type="submit">
-                  {status}
+                <button
+                  className={`button ${['approved', 'completed'].includes(status) ? 'button-success' : status === 'rejected' ? 'button-danger' : 'button-secondary'}`}
+                  type="submit"
+                >
+                  {localizedStatus(status, locale)}
                 </button>
               </form>
             ))}

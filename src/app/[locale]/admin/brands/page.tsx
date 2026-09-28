@@ -19,7 +19,7 @@ export default async function AdminBrands({
     p_permission: 'catalog.write',
   });
   if (!allowed) notFound();
-  const { data: brands } = await db!
+  const { data: brands, error: listError } = await db!
     .from('brands')
     .select('id,slug,name,active')
     .order('name');
@@ -44,12 +44,26 @@ export default async function AdminBrands({
       <div className="two-column">
         <div className="panel">
           <h2>{pick(locale, 'العلامات', 'BRANDS')}</h2>
+          {listError && (
+            <p className="notice error" role="alert">
+              {pick(locale, 'تعذر تحميل القائمة', 'Could not load the list')}
+            </p>
+          )}
+          {!listError && !(brands || []).length && (
+            <p className="admin-empty-table">
+              {pick(locale, 'لا توجد عناصر بعد.', 'No entries yet.')}
+            </p>
+          )}
           {(brands || []).map((brand) => (
             <div className="spec-row" key={brand.id}>
               <Link href={`/${locale}/admin/brands?edit=${brand.id}`}>
                 {brand.name}
               </Link>
-              <span>{brand.active ? 'active' : 'inactive'}</span>
+              <span>
+                {brand.active
+                  ? pick(locale, 'نشط', 'Active')
+                  : pick(locale, 'غير نشط', 'Inactive')}
+              </span>
             </div>
           ))}
         </div>
@@ -62,7 +76,7 @@ export default async function AdminBrands({
           <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="id" value={selected?.id || ''} />
           <label className="field-label">
-            Slug
+            {pick(locale, 'المعرّف المختصر', 'Slug')}
             <input
               className="input"
               name="slug"
@@ -86,8 +100,10 @@ export default async function AdminBrands({
               name="active"
               defaultValue={selected?.active === false ? 'false' : 'true'}
             >
-              <option value="true">active</option>
-              <option value="false">inactive</option>
+              <option value="true">{pick(locale, 'نشط', 'Active')}</option>
+              <option value="false">
+                {pick(locale, 'غير نشط', 'Inactive')}
+              </option>
             </select>
           </label>
           <button className="button button-accent" type="submit">

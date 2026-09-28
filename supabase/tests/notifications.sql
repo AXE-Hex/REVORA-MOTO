@@ -11,10 +11,9 @@ values
 insert into public.staff_roles(user_id,role_id) values('51111111-1111-4111-8111-111111111111','owner');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','51111111-1111-4111-8111-111111111111',true);
-insert into public.addresses(id,user_id,name,line1,city,governorate,phone)
-values('53333333-3333-4333-8333-333333333333',auth.uid(),'Home','1 Test Street','Cairo','Cairo','01000000000');
+select public.save_customer_address(null,'Home','1 Test Street',null,'Cairo','Cairo','01000000000',true) as notification_address_id \gset
 select public.add_cart_item(id,1) from public.products where sku='HLM-001';
-select public.place_order('53333333-3333-4333-8333-333333333333','card');
+select public.place_order(:'notification_address_id','card');
 do $$begin
   if (select count(*) from public.notifications where user_id=auth.uid() and title_en='Order created')<>1 then raise exception 'Order notification missing'; end if;
   if (select count(*) from public.email_outbox where user_id=auth.uid() and status='queued')<>1 then raise exception 'Email outbox entry missing'; end if;

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
+import { localizedAuditAction, localizedAuditEntity } from '@/lib/admin-format';
 
 type Audit = {
   id: string;
@@ -69,12 +70,13 @@ export default async function AdminAudit({
       )}
       <div className="panel" style={{ marginTop: 20 }}>
         {rows.map((row) => (
-          <details key={row.id} className="spec-row">
+          <details key={row.id} className="spec-row admin-audit-card">
             <summary>
               {new Date(row.created_at).toLocaleString(
                 locale === 'ar' ? 'ar-EG' : 'en-GB',
               )}{' '}
-              · {row.action} · {row.entity}
+              · {localizedAuditAction(locale, row.action)} ·{' '}
+              {localizedAuditEntity(locale, row.entity)}
             </summary>
             <div style={{ overflowWrap: 'anywhere' }}>
               <p>

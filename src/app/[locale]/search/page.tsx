@@ -4,6 +4,8 @@ import { productListing, motorcycleListing } from '@/lib/catalog';
 import { MotorcycleCard, ProductCard } from '@/components/cards';
 import { isLocale, pick } from '@/lib/i18n';
 import { Empty } from '@/components/empty';
+import { SearchBox } from '@/components/search-box';
+import { currentUser, supabase } from '@/lib/supabase/server';
 export default async function Search({
   params,
   searchParams,
@@ -33,6 +35,11 @@ export default async function Search({
         { items: [], total: 0 },
         { items: [], total: 0 },
       ];
+  if (q.trim().length >= 2) {
+    const user = await currentUser();
+    const db = await supabase();
+    if (user && db) await db.rpc('record_search_term', { p_term: q.trim() });
+  }
   const gear = gearListing.items;
   const bikes = bikeListing.items;
   const searchHref = (target: number) =>
@@ -47,22 +54,7 @@ export default async function Search({
           <h1 className="page-title">
             {pick(locale, 'ابحث في REVORA', 'SEARCH REVORA')}
           </h1>
-          <form className="search-form" action={`/${locale}/search`}>
-            <input
-              className="input"
-              name="q"
-              defaultValue={q}
-              aria-label="Search"
-              placeholder={pick(
-                locale,
-                'دراجة، قطعة، علامة تجارية...',
-                'Motorcycle, gear, brand...',
-              )}
-            />
-            <button className="button button-accent">
-              {pick(locale, 'بحث', 'SEARCH')}
-            </button>
-          </form>
+          <SearchBox locale={locale} action={`/${locale}/search`} initial={q} />
         </div>
       </section>
       <div className="shell section-small">

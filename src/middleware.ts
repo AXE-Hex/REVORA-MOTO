@@ -11,7 +11,11 @@ export async function middleware(request: NextRequest) {
     )
   )
     return NextResponse.next();
-  let response = NextResponse.next({ request });
+  const forwardedHeaders = new Headers(request.headers);
+  forwardedHeaders.set('x-revora-pathname', path);
+  let response = NextResponse.next({
+    request: { headers: forwardedHeaders },
+  });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (url && key && !url.includes('your-project')) {
@@ -24,7 +28,9 @@ export async function middleware(request: NextRequest) {
           values: { name: string; value: string; options: CookieOptions }[],
         ) {
           values.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = NextResponse.next({
+            request: { headers: forwardedHeaders },
+          });
           values.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

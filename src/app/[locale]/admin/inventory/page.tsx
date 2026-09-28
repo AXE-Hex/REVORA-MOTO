@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
+import { operationFailed } from '@/lib/action-feedback';
+import { localizedInventoryMovement } from '@/lib/admin-format';
 import { adjustStock, createWarehouse, transferStock } from './actions';
 
 export default async function InventoryPage({
@@ -71,7 +73,7 @@ export default async function InventoryPage({
           'Available = on hand − reserved. Every adjustment and transfer is recorded.',
         )}
       </p>
-      {error && <div className="notice error">{error}</div>}
+      {error && <div className="notice error">{operationFailed(locale)}</div>}
       {success && (
         <div className="notice">
           {pick(locale, 'تم حفظ العملية', 'Operation saved')}
@@ -92,7 +94,10 @@ export default async function InventoryPage({
           )}
         </div>
       )}
-      <div className="panel" style={{ overflowX: 'auto', marginTop: 24 }}>
+      <div
+        className="panel admin-inventory-table"
+        style={{ overflowX: 'auto', marginTop: 24 }}
+      >
         <table className="data-table">
           <thead>
             <tr>
@@ -128,6 +133,52 @@ export default async function InventoryPage({
         </table>
         {!rows.length && (
           <p>{pick(locale, 'لا توجد أرصدة بعد', 'No location balances yet')}</p>
+        )}
+      </div>
+      <div className="admin-inventory-mobile-list">
+        {rows.map((row) => {
+          const available = row.on_hand - row.reserved;
+          const low =
+            available <=
+            (products.get(row.product_id)?.low_stock_threshold || 0);
+          return (
+            <article className="admin-inventory-mobile-card panel" key={row.id}>
+              <header>
+                <strong>{label(row)}</strong>
+                <span>{locations.get(row.warehouse_id)?.name || '—'}</span>
+              </header>
+              <dl>
+                <div>
+                  <dt>{pick(locale, 'الفعلي', 'On hand')}</dt>
+                  <dd>{row.on_hand}</dd>
+                </div>
+                <div>
+                  <dt>{pick(locale, 'المحجوز', 'Reserved')}</dt>
+                  <dd>{row.reserved}</dd>
+                </div>
+                <div className={low ? 'is-low-stock' : ''}>
+                  <dt>{pick(locale, 'المتاح', 'Available')}</dt>
+                  <dd>
+                    {available}
+                    {low && (
+                      <span className="low-stock-label">
+                        ⚠ {pick(locale, 'منخفض', 'Low')}
+                      </span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{pick(locale, 'القادم', 'Incoming')}</dt>
+                  <dd>{row.incoming}</dd>
+                </div>
+              </dl>
+            </article>
+          );
+        })}
+        {!rows.length && !stockResult.error && (
+          <p className="admin-empty-state">
+            {pick(locale, 'لا توجد أرصدة بعد', 'No location balances yet')}
+          </p>
         )}
       </div>
       <div className="two-column" style={{ marginTop: 24 }}>
@@ -244,9 +295,12 @@ export default async function InventoryPage({
           {pick(locale, 'إضافة موقع', 'ADD LOCATION')}
         </button>
       </form>
-      <div className="panel" style={{ overflowX: 'auto', marginTop: 24 }}>
+      <div
+        className="panel admin-inventory-movements"
+        style={{ marginTop: 24 }}
+      >
         <h2>{pick(locale, 'آخر الحركات', 'RECENT MOVEMENTS')}</h2>
-        <table className="data-table">
+        <table className="data-table admin-inventory-movement-table">
           <thead>
             <tr>
               <th>{pick(locale, 'الوقت', 'TIME')}</th>
@@ -260,7 +314,7 @@ export default async function InventoryPage({
             {(movementsResult.data || []).map((m) => (
               <tr key={m.id}>
                 <td>{new Date(m.created_at).toLocaleString(locale)}</td>
-                <td>{m.kind}</td>
+                <td>{localizedInventoryMovement(locale, m.kind)}</td>
                 <td>{m.delta}</td>
                 <td>{m.incoming_delta}</td>
                 <td>{m.reason}</td>
@@ -268,6 +322,48 @@ export default async function InventoryPage({
             ))}
           </tbody>
         </table>
+        <div className="admin-inventory-movement-cards">
+          {(movementsResult.data || []).map((movement) => (
+            <article
+              className="admin-mobile-data-card"
+              key={`movement-${movement.id}`}
+            >
+              <header>
+                <strong>
+                  {localizedInventoryMovement(locale, movement.kind)}
+                </strong>
+                <time dateTime={movement.created_at}>
+                  {new Date(movement.created_at).toLocaleString(
+                    locale === 'ar' ? 'ar-EG' : 'en-GB',
+                  )}
+                </time>
+              </header>
+              <dl>
+                <div>
+                  <dt>{pick(locale, 'التغير', 'Change')}</dt>
+                  <dd>{movement.delta}</dd>
+                </div>
+                <div>
+                  <dt>{pick(locale, 'المخزون القادم', 'Incoming')}</dt>
+                  <dd>{movement.incoming_delta}</dd>
+                </div>
+                <div>
+                  <dt>{pick(locale, 'السبب', 'Reason')}</dt>
+                  <dd>{movement.reason}</dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+          {!movementsResult.data?.length && (
+            <p>
+              {pick(
+                locale,
+                'لا توجد حركات مخزون بعد',
+                'No stock movements yet',
+              )}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

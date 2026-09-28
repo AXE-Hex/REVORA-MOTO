@@ -1,7 +1,9 @@
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
+import { formatDate } from '@/lib/format';
+import { operationFailed } from '@/lib/action-feedback';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { registerWarranty, requestWarrantyClaim } from '../service-actions';
 
 export default async function Warranties({
@@ -48,7 +50,7 @@ export default async function Warranties({
   const { data: claims } = await db
     .from('warranty_claims')
     .select(
-      'id,warranty_id,details,status,admin_notes,created_at,warranty_claim_history(from_status,to_status,note,created_at),case_attachments(storage_path)',
+      'id,warranty_id,details,status,created_at,warranty_claim_history(from_status,to_status,created_at),case_attachments(storage_path)',
     )
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
@@ -67,32 +69,44 @@ export default async function Warranties({
   );
   const { error } = await searchParams;
   return (
-    <div className="shell section-small">
-      <div className="breadcrumbs">
-        <Link href={`/${locale}/account`}>ACCOUNT</Link> / WARRANTIES
+    <section className="account-warranties-page">
+      <div className="account-page-heading">
+        <span className="section-index">
+          {pick(locale, 'خدمة ما بعد البيع', 'AFTER-SALES')}
+        </span>
+        <h2 className="page-title">{pick(locale, 'الضمان', 'Warranties')}</h2>
       </div>
-      <h1 className="page-title">{pick(locale, 'الضمان', 'WARRANTIES')}</h1>
-      {error && <div className="notice error">{error}</div>}
+      {error && <div className="notice error">{operationFailed(locale)}</div>}
       <div className="two-column">
         <div>
-          <h2>{pick(locale, 'ضماناتي', 'MY WARRANTIES')}</h2>
+          <h3>{pick(locale, 'ضماناتي', 'My warranties')}</h3>
           {warranties?.map((w) => {
             const item = items?.find((i) => i.id === w.order_item_id);
             const expired =
               w.status === 'expired' ||
               w.ends_at < new Date().toISOString().slice(0, 10);
             return (
-              <div className="panel" key={w.id} style={{ marginBottom: 12 }}>
-                <strong>
-                  {item
-                    ? pick(locale, item.name_ar_snapshot, item.name_en_snapshot)
-                    : w.order_item_id}{' '}
-                  #{w.unit_number}
-                </strong>{' '}
-                <span className="status">{expired ? 'expired' : w.status}</span>
-                <p>
-                  {pick(locale, 'من', 'From')} {w.starts_at}{' '}
-                  {pick(locale, 'إلى', 'to')} {w.ends_at}
+              <article className="panel account-service-card" key={w.id}>
+                <div className="account-service-card-heading">
+                  <strong>
+                    {item
+                      ? pick(
+                          locale,
+                          item.name_ar_snapshot,
+                          item.name_en_snapshot,
+                        )
+                      : pick(locale, 'منتج من طلبك', 'Purchased product')}{' '}
+                    · #{w.unit_number}
+                  </strong>
+                  <StatusBadge
+                    status={expired ? 'expired' : w.status}
+                    locale={locale}
+                  />
+                </div>
+                <p className="muted">
+                  {pick(locale, 'مدة الضمان', 'Warranty period')}:{' '}
+                  {formatDate(w.starts_at, locale)} –{' '}
+                  {formatDate(w.ends_at, locale)}
                 </p>
                 {w.serial_number && (
                   <small>
@@ -103,8 +117,7 @@ export default async function Warranties({
                 {!expired && w.status === 'active' && (
                   <form
                     action={requestWarrantyClaim}
-                    className="form-stack"
-                    style={{ marginTop: 16 }}
+                    className="form-stack account-warranty-claim-form"
                   >
                     <input type="hidden" name="locale" value={locale} />
                     <input type="hidden" name="warranty" value={w.id} />
@@ -127,20 +140,33 @@ export default async function Warranties({
                         accept="image/jpeg,image/png,image/webp"
                       />
                     </label>
-                    <button className="button button-accent">
+                    <button className="button button-primary">
                       {pick(locale, 'طلب مطالبة', 'FILE CLAIM')}
                     </button>
                   </form>
                 )}
-              </div>
+              </article>
             );
           })}
           {!warranties?.length && (
-            <p>
-              {pick(locale, 'لا توجد ضمانات مسجلة', 'No registered warranties')}
-            </p>
+            <div className="panel account-empty-state">
+              <h4>
+                {pick(
+                  locale,
+                  'لا توجد ضمانات مسجلة',
+                  'No registered warranties',
+                )}
+              </h4>
+              <p className="muted">
+                {pick(
+                  locale,
+                  'يمكنك تسجيل ضمان المنتجات المؤهلة بعد تسليم الطلب.',
+                  'Eligible product warranties can be registered after delivery.',
+                )}
+              </p>
+            </div>
           )}
-          <h2>{pick(locale, 'مطالبات الضمان', 'WARRANTY CLAIMS')}</h2>
+          <h3>{pick(locale, 'مطالبات الضمان', 'Warranty claims')}</h3>
           {claims?.map(async (c) => {
             const imageLinks = await Promise.all(
               (c.case_attachments || []).map(async (a) => {
@@ -151,36 +177,39 @@ export default async function Warranties({
               }),
             );
             return (
-              <div className="panel" key={c.id} style={{ marginBottom: 12 }}>
-                <strong>{c.details}</strong>{' '}
-                <span className="status">{c.status}</span>
-                {c.admin_notes && (
-                  <p>
-                    {pick(locale, 'ملاحظات الإدارة', 'Staff notes')}:{' '}
-                    {c.admin_notes}
-                  </p>
-                )}
-                <ul>
+              <article className="panel account-service-card" key={c.id}>
+                <div className="account-service-card-heading">
+                  <strong>{c.details}</strong>
+                  <StatusBadge status={c.status} locale={locale} />
+                </div>
+                <time dateTime={c.created_at}>
+                  {formatDate(c.created_at, locale)}
+                </time>
+                <ul className="account-service-history">
                   {c.warranty_claim_history?.map((h) => (
                     <li key={`${h.created_at}-${h.to_status}`}>
-                      {h.to_status} ·{' '}
-                      {new Date(h.created_at).toLocaleString(
-                        locale === 'ar' ? 'ar-EG' : 'en-GB',
-                      )}
-                      {h.note ? ` · ${h.note}` : ''}
+                      <StatusBadge status={h.to_status} locale={locale} />
+                      <time dateTime={h.created_at}>
+                        {formatDate(h.created_at, locale)}
+                      </time>
                     </li>
                   ))}
                 </ul>
-                {imageLinks.filter(Boolean).map((url, index) => (
-                  <a key={index} href={url!} target="_blank" rel="noreferrer">
-                    {pick(locale, 'عرض الصورة', 'View image')} {index + 1} ↗
-                  </a>
-                ))}
-              </div>
+                <div className="account-service-attachments">
+                  {imageLinks.filter(Boolean).map((url, index) => (
+                    <a key={index} href={url!} target="_blank" rel="noreferrer">
+                      {pick(locale, 'عرض الصورة', 'View image')} {index + 1} ↗
+                    </a>
+                  ))}
+                </div>
+              </article>
             );
           })}
         </div>
-        <form action={registerWarranty} className="form-stack panel">
+        <form
+          action={registerWarranty}
+          className="form-stack panel account-service-form"
+        >
           <h2>{pick(locale, 'تسجيل ضمان', 'REGISTER WARRANTY')}</h2>
           <p>
             {pick(
@@ -204,15 +233,24 @@ export default async function Warranties({
               ))}
             </select>
           </label>
+          {!eligible.length && (
+            <p className="muted">
+              {pick(
+                locale,
+                'لا توجد منتجات مؤهلة لتسجيل ضمان حالياً.',
+                'There are no products eligible for warranty registration yet.',
+              )}
+            </p>
+          )}
           <label className="field-label">
             {pick(locale, 'الرقم التسلسلي (إن وجد)', 'SERIAL NUMBER (IF ANY)')}
             <input className="input" name="serial" maxLength={120} />
           </label>
-          <button className="button button-accent" disabled={!eligible.length}>
+          <button className="button button-primary" disabled={!eligible.length}>
             {pick(locale, 'تسجيل', 'REGISTER')}
           </button>
         </form>
       </div>
-    </div>
+    </section>
   );
 }

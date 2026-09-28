@@ -12,11 +12,11 @@ reset role;
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at) values('11111111-1111-4111-8111-111111111111','00000000-0000-0000-0000-000000000000','authenticated','authenticated','revora-test@example.com','',now(),now(),now());
 set local role authenticated;
 select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
-insert into public.addresses(id,user_id,name,line1,city,governorate,phone) values('22222222-2222-4222-8222-222222222222',auth.uid(),'Home','12 Test Street','Cairo','Cairo','01000000000');
+select public.save_customer_address(null,'Home','12 Test Street',null,'Cairo','Cairo','01000000000',true) as test_address_id \gset
 select public.add_cart_item(id,1) from public.products where sku='HLM-001';
 select public.add_cart_item(id,1) from public.products where sku='HLM-001';
 do $$begin if (select quantity from public.cart_items limit 1)<>2 then raise exception 'Cart quantity not merged';end if;end$$;
-select public.place_order('22222222-2222-4222-8222-222222222222','card') as placed_order \gset
+select public.place_order(:'test_address_id','card') as placed_order \gset
 select set_config('test.order_id',:'placed_order',true);
 do $$begin
   if (select total_egp from public.orders where id=current_setting('test.order_id')::uuid)<>29000 then raise exception 'Server price snapshot wrong';end if;
@@ -25,7 +25,7 @@ do $$begin
   if (select status from public.orders where id=current_setting('test.order_id')::uuid)<>'pending_payment' then raise exception 'Order incorrectly paid';end if;
 end$$;
 select public.add_cart_item((select id from public.products where sku='GEAR-001'),1,(select id from public.product_variants where sku='GEAR-001-L'));
-select public.place_order('22222222-2222-4222-8222-222222222222','card') as variant_order \gset
+select public.place_order(:'test_address_id','card') as variant_order \gset
 select set_config('test.variant_order_id',:'variant_order',true);
 do $$begin
   if (select total_egp from public.orders where id=current_setting('test.variant_order_id')::uuid)<>8000 then raise exception 'Variant price snapshot wrong';end if;

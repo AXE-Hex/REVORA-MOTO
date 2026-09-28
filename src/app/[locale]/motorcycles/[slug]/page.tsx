@@ -8,6 +8,11 @@ import { ShowroomGallery } from '@/components/showroom-gallery';
 import { supabase } from '@/lib/supabase/server';
 import { WishlistButton } from '@/components/wishlist-button';
 import {
+  motorcycleAvailability,
+  motorcycleCondition,
+  motorcycleSpecRows,
+} from '@/lib/motorcycle-format';
+import {
   absoluteMediaUrl,
   detailBreadcrumbs,
   serializeJsonLd,
@@ -113,17 +118,18 @@ export default async function MotorcycleDetail({
         : []),
     ],
   };
-  const specs = [
-    ['YEAR', item.year],
-    ['ENGINE', item.engine_cc ? `${item.engine_cc} CC` : null],
-    ['POWER', item.horsepower ? `${item.horsepower} HP` : null],
-    ['CONDITION', item.condition],
-    [
-      'MILEAGE',
-      item.mileage_km != null ? `${item.mileage_km.toLocaleString()} KM` : null,
-    ],
-    ...Object.entries(item.specs || {}),
-  ].filter(([, value]) => value !== null);
+  const specs = motorcycleSpecRows(
+    {
+      year: item.year,
+      engineCc: item.engine_cc,
+      horsepower: item.horsepower,
+      mileageKm: item.mileage_km,
+      condition: item.condition,
+      availability: item.availability,
+      specs: item.specs,
+    },
+    locale,
+  );
   return (
     <>
       <script
@@ -134,20 +140,23 @@ export default async function MotorcycleDetail({
         <div className="shell">
           <div className="breadcrumbs">
             <Link href={`/${locale}`}>REVORA</Link> /{' '}
-            <Link href={`/${locale}/motorcycles`}>MOTORCYCLES</Link> / {name}
+            <Link href={`/${locale}/motorcycles`}>
+              {pick(locale, 'الدراجات النارية', 'Motorcycles')}
+            </Link>{' '}
+            / {name}
           </div>
           <span className="section-index">REVORA SHOWROOM / {item.year}</span>
           <h1 className="page-title">{name}</h1>
         </div>
       </section>
-      <div className="shell detail-layout">
+      <div className="shell detail-layout motorcycle-detail-layout">
         <div>
           <ShowroomGallery images={images} name={name} locale={locale} />
           <div className="spec-list">
-            {specs.map(([key, value]) => (
-              <div className="spec-row" key={String(key)}>
-                <span>{String(key).replaceAll('_', ' ')}</span>
-                <strong>{String(value)}</strong>
+            {specs.map((spec) => (
+              <div className="spec-row" key={spec.key}>
+                <span>{spec.label}</span>
+                <strong>{spec.value}</strong>
               </div>
             ))}
           </div>
@@ -163,15 +172,17 @@ export default async function MotorcycleDetail({
             </div>
           )}
           <span className="section-index">
-            {item.condition === 'new'
-              ? pick(locale, 'جديد', 'NEW MOTORCYCLE')
-              : pick(locale, 'مستعمل', 'PRE-OWNED')}
+            {motorcycleCondition(item.condition, locale)}
           </span>
           <h2 className="page-title">{name}</h2>
           <p>
             {pick(locale, item.description_ar || '', item.description_en || '')}
           </p>
           <div className="price">{money(item.price_egp, locale)}</div>
+          <div className="motorcycle-availability">
+            <span>{pick(locale, 'التوفر', 'Availability')}</span>
+            <strong>{motorcycleAvailability(item.availability, locale)}</strong>
+          </div>
           <div className="notice">
             {pick(
               locale,
@@ -200,7 +211,25 @@ export default async function MotorcycleDetail({
               'Motorcycles are reserved with a deposit and followed up by our sales team.',
             )}
           </p>
+          <p className="motorcycle-branch-note">
+            {pick(
+              locale,
+              'اختر الفرع المناسب في الخطوة التالية من الحجز. بيانات الفرع ستظهر قبل التأكيد.',
+              'Choose your preferred branch during the next reservation step. Branch details are shown before confirmation.',
+            )}
+          </p>
         </div>
+      </div>
+      <div className="motorcycle-mobile-cta">
+        <div>
+          <span>{pick(locale, 'عربون الحجز', 'Reservation deposit')}</span>
+          <strong>{money(item.deposit_egp, locale)}</strong>
+        </div>
+        <ReserveButton
+          id={item.id}
+          locale={locale}
+          available={item.availability === 'available'}
+        />
       </div>
     </>
   );

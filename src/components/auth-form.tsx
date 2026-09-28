@@ -55,9 +55,13 @@ export function AuthForm({ locale, next }: { locale: Locale; next: string }) {
         router.push(safeNext);
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setMessage(
-        error instanceof Error ? error.message : 'Authentication failed',
+        pick(
+          locale,
+          'تعذر إكمال تسجيل الدخول. تحقق من البيانات وحاول مرة أخرى.',
+          'We could not complete sign in. Check your details and try again.',
+        ),
       );
     } finally {
       setLoading(false);
@@ -75,7 +79,14 @@ export function AuthForm({ locale, next }: { locale: Locale; next: string }) {
         redirectTo: `${location.origin}/${locale}/auth/callback?next=${encodeURIComponent(safeNext)}`,
       },
     });
-    if (error) setMessage(error.message);
+    if (error)
+      setMessage(
+        pick(
+          locale,
+          'تعذر بدء تسجيل الدخول عبر Google. حاول مرة أخرى.',
+          'Could not start Google sign in. Please try again.',
+        ),
+      );
   }
   return (
     <div className="auth-card">

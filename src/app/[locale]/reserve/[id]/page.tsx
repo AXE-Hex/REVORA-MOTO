@@ -1,8 +1,13 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { supabase, currentUser } from '@/lib/supabase/server';
-import { isLocale, pick, money } from '@/lib/i18n';
-import { reserve } from '@/app/actions';
+import { currentUser, supabase } from '@/lib/supabase/server';
+import { isLocale, pick } from '@/lib/i18n';
+import {
+  ReservationFlow,
+  type ReservationBike,
+  type ReservationBranch,
+} from '@/components/reservation-flow';
+
 export default async function ReservePage({
   params,
 }: {
@@ -14,53 +19,62 @@ export default async function ReservePage({
   if (!user) redirect(`/${locale}/auth?next=/${locale}/reserve/${id}`);
   const db = await supabase();
   if (!db) notFound();
-  const [{ data: bike }, { data: branches }] = await Promise.all([
-    db.from('public_motorcycles').select('*').eq('id', id).maybeSingle(),
-    db.from('branches').select('id,name_ar,name_en').eq('active', true),
-  ]);
-  if (!bike || bike.availability !== 'available') notFound();
+  const [{ data: rawBike }, { data: rawBranches }, { data: profile }] =
+    await Promise.all([
+      db
+        .from('public_motorcycles')
+        .select(
+          'id,slug,name_ar,name_en,year,condition,deposit_egp,image_url,availability',
+        )
+        .eq('id', id)
+        .maybeSingle(),
+      db
+        .from('branches')
+        .select('id,name_ar,name_en,address_ar,address_en')
+        .eq('active', true)
+        .order('name_en'),
+      db
+        .from('profiles')
+        .select('full_name,phone')
+        .eq('id', user.id)
+        .maybeSingle(),
+    ]);
+  if (!rawBike || rawBike.availability !== 'available') notFound();
+  const bike: ReservationBike = {
+    id: rawBike.id,
+    slug: rawBike.slug,
+    name: pick(locale, rawBike.name_ar, rawBike.name_en),
+    year: rawBike.year,
+    condition: rawBike.condition,
+    deposit: Number(rawBike.deposit_egp),
+    image: rawBike.image_url,
+  };
+  const branches: ReservationBranch[] = (rawBranches || []).map((branch) => ({
+    id: branch.id,
+    name: pick(locale, branch.name_ar, branch.name_en),
+    address: pick(locale, branch.address_ar, branch.address_en) || null,
+  }));
   return (
-    <div className="shell section-small">
+    <main className="shell section-small reservation-page">
       <div className="breadcrumbs">
-        <Link href={`/${locale}/motorcycles`}>MOTORCYCLES</Link> / RESERVE
+        <Link href={`/${locale}`}>REVORA</Link> /{' '}
+        <Link href={`/${locale}/motorcycles`}>
+          {pick(locale, 'الدراجات', 'MOTORCYCLES')}
+        </Link>{' '}
+        / {pick(locale, 'حجز', 'RESERVE')}
       </div>
-      <span className="section-index">RESERVATION / {bike.year}</span>
+      <span className="section-index">05 / RESERVATION</span>
       <h1 className="page-title">
-        {pick(locale, 'احجز دراجتك', 'RESERVE YOUR RIDE')}
+        {pick(locale, 'احجز دراجتك', 'Reserve your motorcycle')}
       </h1>
-      <div className="two-column">
-        <div className="panel">
-          <h2>{pick(locale, bike.name_ar, bike.name_en)}</h2>
-          <p>
-            {pick(locale, 'العربون المطلوب', 'DEPOSIT REQUIRED')}:{' '}
-            <strong>{money(bike.deposit_egp, locale)}</strong>
-          </p>
-          <p>
-            {pick(
-              locale,
-              'سيبقى الدفع معلقاً حتى يؤكده مزود الدفع. سيتواصل معك فريق المبيعات.',
-              'Your payment remains pending until verified by the provider. Our sales team will follow up.',
-            )}
-          </p>
-        </div>
-        <form action={reserve} className="form-stack panel">
-          <input type="hidden" name="locale" value={locale} />
-          <input type="hidden" name="motorcycle" value={id} />
-          <label className="field-label">
-            {pick(locale, 'اختر الفرع', 'SELECT BRANCH')}
-            <select className="input" name="branch" required>
-              {(branches || []).map((b) => (
-                <option key={b.id} value={b.id}>
-                  {pick(locale, b.name_ar, b.name_en)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="button button-accent">
-            {pick(locale, 'تأكيد طلب الحجز', 'CONFIRM RESERVATION')}
-          </button>
-        </form>
-      </div>
-    </div>
+      <ReservationFlow
+        locale={locale}
+        bike={bike}
+        branches={branches}
+        fullName={profile?.full_name || ''}
+        email={user.email || ''}
+        phone={profile?.phone || ''}
+      />
+    </main>
   );
 }

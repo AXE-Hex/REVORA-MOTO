@@ -4,8 +4,12 @@ import { currentUser, supabase } from '@/lib/supabase/server';
 import { isLocale, pick } from '@/lib/i18n';
 import {
   saveCheckoutRates,
-  saveSiteSetting,
+  saveSiteSettings,
 } from '@/app/admin-settings-actions';
+import {
+  DirtyActionBar,
+  EditorSectionNav,
+} from '@/components/admin-editor-controls';
 
 const fields = [
   { key: 'contact_email', ar: 'البريد للتواصل', en: 'Contact email', max: 254 },
@@ -68,7 +72,7 @@ export default async function AdminSettings({
   const tax = rows?.find((row) => row.key === 'tax_rate_percent')?.value;
   const query = await searchParams;
   return (
-    <div className="shell section-small">
+    <div className="shell section-small admin-settings-page">
       <div className="breadcrumbs">
         <Link href={`/${locale}/admin`}>ADMIN</Link> / SETTINGS
       </div>
@@ -82,6 +86,16 @@ export default async function AdminSettings({
           'Contact details and checkout rates for new orders.',
         )}
       </p>
+      <EditorSectionNav
+        locale={locale}
+        items={[
+          {
+            id: 'general',
+            label: pick(locale, 'عام والمتجر', 'General & store'),
+          },
+          { id: 'commerce', label: pick(locale, 'التجارة', 'Commerce') },
+        ]}
+      />
       {(error || query.error) && (
         <p className="notice error">
           {pick(
@@ -94,75 +108,95 @@ export default async function AdminSettings({
       {query.saved && (
         <p className="notice">{pick(locale, 'تم الحفظ', 'Saved')}</p>
       )}
-      <div className="two-column">
-        {fields.map((field) => (
-          <form
-            className="panel form-stack"
-            action={saveSiteSetting}
-            key={field.key}
-          >
-            <input type="hidden" name="locale" value={locale} />
-            <input type="hidden" name="key" value={field.key} />
-            <label className="field-label">
-              {pick(locale, field.ar, field.en)}
-              <input
-                className="input"
-                type={field.key === 'contact_email' ? 'email' : 'text'}
-                name="value"
-                maxLength={field.max}
-                defaultValue={values.get(field.key) || ''}
-              />
-            </label>
-            <button className="button button-accent" type="submit">
-              {pick(locale, 'حفظ', 'SAVE')}
-            </button>
-          </form>
-        ))}
-      </div>
-      <form
-        className="panel form-stack"
-        action={saveCheckoutRates}
-        style={{ maxWidth: 650, marginTop: 24 }}
+      <section
+        id="general"
+        className="admin-settings-section"
+        aria-labelledby="settings-general-title"
       >
-        <h2>{pick(locale, 'رسوم إتمام الطلب', 'CHECKOUT RATES')}</h2>
-        <p>
-          {pick(
-            locale,
-            'القيم المعتمدة بالجنيه المصري وتُحفظ في لقطة كل طلب جديد. لا تتغير الطلبات السابقة.',
-            'Amounts are in EGP and saved with each new order. Existing orders keep their original totals.',
-          )}
-        </p>
-        <input type="hidden" name="locale" value={locale} />
-        <label className="field-label">
-          {pick(locale, 'رسوم الشحن الثابتة (ج.م)', 'Flat shipping (EGP)')}
-          <input
-            className="input"
-            type="number"
-            name="shipping"
-            min="0"
-            max="10000"
-            step="0.01"
-            required
-            defaultValue={typeof shipping === 'number' ? shipping : 0}
+        <h2 id="settings-general-title">
+          {pick(locale, 'إعدادات المتجر العامة', 'GENERAL & STORE')}
+        </h2>
+        <form className="panel admin-settings-form" action={saveSiteSettings}>
+          <input type="hidden" name="locale" value={locale} />
+          <div className="two-column">
+            {fields.map((field) => (
+              <label className="field-label" key={field.key}>
+                {pick(locale, field.ar, field.en)}
+                <input type="hidden" name="key" value={field.key} />
+                <input
+                  className="input"
+                  type={field.key === 'contact_email' ? 'email' : 'text'}
+                  name="value"
+                  maxLength={field.max}
+                  defaultValue={values.get(field.key) || ''}
+                />
+              </label>
+            ))}
+          </div>
+          <DirtyActionBar
+            locale={locale}
+            saveLabel={pick(locale, 'حفظ الإعدادات', 'SAVE SETTINGS')}
           />
-        </label>
-        <label className="field-label">
-          {pick(locale, 'نسبة الضريبة المطبقة (%)', 'Configured tax rate (%)')}
-          <input
-            className="input"
-            type="number"
-            name="tax"
-            min="0"
-            max="100"
-            step="0.01"
-            required
-            defaultValue={typeof tax === 'number' ? tax : 0}
+        </form>
+      </section>
+      <section
+        id="commerce"
+        className="admin-settings-section"
+        aria-labelledby="settings-commerce-title"
+      >
+        <form
+          className="panel form-stack"
+          id="settings-rates-form"
+          action={saveCheckoutRates}
+          style={{ maxWidth: 650, marginTop: 24 }}
+        >
+          <h2 id="settings-commerce-title">
+            {pick(locale, 'رسوم إتمام الطلب', 'CHECKOUT RATES')}
+          </h2>
+          <p>
+            {pick(
+              locale,
+              'القيم المعتمدة بالجنيه المصري وتُحفظ في لقطة كل طلب جديد. لا تتغير الطلبات السابقة.',
+              'Amounts are in EGP and saved with each new order. Existing orders keep their original totals.',
+            )}
+          </p>
+          <input type="hidden" name="locale" value={locale} />
+          <label className="field-label">
+            {pick(locale, 'رسوم الشحن الثابتة (ج.م)', 'Flat shipping (EGP)')}
+            <input
+              className="input"
+              type="number"
+              name="shipping"
+              min="0"
+              max="10000"
+              step="0.01"
+              required
+              defaultValue={typeof shipping === 'number' ? shipping : 0}
+            />
+          </label>
+          <label className="field-label">
+            {pick(
+              locale,
+              'نسبة الضريبة المطبقة (%)',
+              'Configured tax rate (%)',
+            )}
+            <input
+              className="input"
+              type="number"
+              name="tax"
+              min="0"
+              max="100"
+              step="0.01"
+              required
+              defaultValue={typeof tax === 'number' ? tax : 0}
+            />
+          </label>
+          <DirtyActionBar
+            locale={locale}
+            saveLabel={pick(locale, 'حفظ الرسوم', 'SAVE RATES')}
           />
-        </label>
-        <button className="button button-accent" type="submit">
-          {pick(locale, 'حفظ الرسوم', 'SAVE RATES')}
-        </button>
-      </form>
+        </form>
+      </section>
     </div>
   );
 }

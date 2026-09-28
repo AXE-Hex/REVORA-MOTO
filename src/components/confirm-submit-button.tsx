@@ -3,7 +3,7 @@
 export function ConfirmSubmitButton({
   label,
   message,
-  className = 'button button-ghost',
+  className = 'button button-danger',
 }: {
   label: string;
   message: string;
