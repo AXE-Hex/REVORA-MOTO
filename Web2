@@ -1,0 +1,525 @@
+Continue working on the existing **REVORA MOTO** project in:
+
+`المستندات/app/Web/`
+
+The file:
+
+`المستندات/app/Web/Web`
+
+is the authoritative project specification.
+
+Do **not** create another application, repository, or parallel project.
+
+Continue from the current implementation and complete the remaining specification.
+
+First, perform a full gap analysis between the current implementation and the specification file, then update `AGENT_STATUS.md` with:
+
+- DONE
+- PARTIAL
+- MISSING
+- BLOCKED
+
+for every major feature.
+
+Then immediately continue implementation.
+
+Use the existing multi-agent architecture and launch/relaunch specialized agents where appropriate.
+
+## Priority 1 — Admin & Store Operations
+
+Complete the production-grade admin dashboard, including:
+
+- Dashboard overview
+- Product management
+- Product variants
+- Categories
+- Brands
+- Motorcycle management
+- Used motorcycle management
+- Motorcycle media/gallery management
+- Fitment management
+- Orders
+- Motorcycle reservations
+- Customers
+- Reviews moderation
+- Inventory
+- Branches
+- Warehouses
+- Stock adjustments
+- Stock transfers
+- Suppliers
+- Purchase orders
+- Promotions
+- Coupons
+- Returns
+- Refund workflows
+- Warranties
+- Staff
+- Roles
+- Permissions
+- Notifications
+- Audit logs
+- Site settings
+- Reports and analytics
+
+All administrative permissions must be enforced server-side and through Supabase RLS/RBAC, not only by hiding UI elements.
+
+## Priority 2 — Promotions
+
+Implement the complete promotions engine:
+
+- Coupon codes
+- Percentage discounts
+- Fixed discounts
+- Product discounts
+- Category discounts
+- Brand discounts
+- Scheduled promotions
+- Start/end date
+- Minimum purchase value
+- Global usage limit
+- Per-customer usage limit
+- Active/inactive state
+- Server-side validation
+- Coupon usage history
+
+Never trust discount values calculated by the browser.
+
+## Priority 3 — Returns & Refunds
+
+Implement the complete returns lifecycle:
+
+`requested`
+→ `under_review`
+→ `approved/rejected`
+→ `received`
+→ `inspected`
+→ `refund_pending`
+→ `refunded`
+→ `completed`
+
+Support:
+
+- Return reasons
+- Customer notes
+- Product selection
+- Quantity
+- Image evidence
+- Admin notes
+- Inspection notes
+- Refund amount
+- Return history
+- Customer return tracking
+
+Refund architecture must integrate with the payment abstraction.
+
+Since a real payment provider has NOT been selected yet, do not fake real refunds.
+
+Keep external financial operations in sandbox/pending/provider-required state.
+
+## Priority 4 — Warranty System
+
+Complete:
+
+- Warranty registration
+- Warranty period
+- Serial number
+- Order relationship
+- Product relationship
+- Warranty claims
+- Claim status
+- Customer notes
+- Admin notes
+- Claim history
+- Attachments/images
+- Expiration handling
+
+## Priority 5 — Inventory & Suppliers
+
+Complete multi-location inventory.
+
+Support:
+
+- Warehouse stock
+- Branch stock
+- Reserved quantity
+- Available quantity
+- Incoming stock
+- Adjustments
+- Transfers
+- Receiving
+- Low-stock thresholds
+- Stock movement history
+
+Every inventory mutation must generate an immutable stock movement record.
+
+Implement supplier management:
+
+- Supplier details
+- Supplier products
+- Supplier SKU/reference
+- Purchase costs
+- Purchase orders
+- Purchase order items
+- Receiving
+
+Purchase costs and supplier-private information must never be exposed through public APIs/pages.
+
+## Priority 6 — Reservations
+
+Audit the motorcycle reservation system and make sure it fully supports:
+
+- pending
+- awaiting_payment
+- deposit_paid
+- contacted
+- appointment_scheduled
+- completed
+- cancelled
+- expired
+- refunded
+
+Ensure:
+
+- Reservation history exists
+- Deposit amount is calculated server-side
+- Duplicate/conflicting reservations are prevented where appropriate
+- Admin sales workflow exists
+- Customer reservation tracking exists
+- Motorcycle availability is updated correctly
+
+## Priority 7 — Customer Account Completion
+
+Complete all account sections:
+
+- Profile
+- Saved addresses
+- Orders
+- Order detail
+- Reservations
+- Wishlist
+- My Garage
+- Reviews
+- Notifications
+- Warranty registrations
+- Warranty claims
+- Returns
+
+Ensure Arabic RTL and English LTR work correctly everywhere.
+
+## Priority 8 — Review Security
+
+Reviews must only be allowed when:
+
+- The authenticated user owns the order
+- The product exists in that order
+- The order was delivered/completed
+
+Prevent duplicate reviews where business rules require it.
+
+Implement:
+
+- Rating
+- Text
+- Images
+- Moderation
+- Verified purchase badge
+
+## Priority 9 — Notifications
+
+Finish:
+
+- In-app notifications
+- Email notification architecture
+
+Events should include:
+
+- Order created
+- Payment update
+- Order status update
+- Reservation created
+- Deposit confirmation
+- Reservation status
+- Return update
+- Refund update
+- Warranty update
+- Back in stock
+- Price change
+
+Do not add SMS now.
+
+## Priority 10 — Analytics
+
+Build useful admin reporting using real database data.
+
+Include:
+
+- Revenue
+- Order count
+- Average order value
+- Reservation count
+- Deposits
+- Best-selling products
+- Best categories
+- Popular motorcycles
+- Inventory status
+- Low-stock products
+- Returns
+- Refunds
+- Customer growth
+
+No hardcoded/fake analytics.
+
+## Priority 11 — Search & Fitment Audit
+
+Audit the existing product search and fitment engine.
+
+Make sure customers can select:
+
+`Brand → Model → Year → Engine/Variant`
+
+and receive compatible products.
+
+Support:
+
+- exact fit
+- universal fit
+- year ranges
+- multiple compatible motorcycles
+- exclusions
+
+My Garage must integrate with fitment.
+
+The active garage motorcycle should allow:
+
+- compatible-only filtering
+- compatibility badges
+- incompatibility warning
+
+## Priority 12 — Motorcycle Experience
+
+Audit and improve the motorcycle detail experience.
+
+The media viewer must support:
+
+- Large hero
+- Fullscreen gallery
+- Thumbnails
+- Smooth transitions
+- Zoom
+- Mobile swipe
+- Keyboard navigation
+- Image optimization
+- Multiple viewing angles
+
+Do not reduce this to a basic carousel.
+
+Also confirm motorcycle comparison works well for up to four motorcycles.
+
+## Priority 13 — Seed Content
+
+Keep sample/demo content database-driven.
+
+Add enough realistic placeholder/demo records for development:
+
+- Approximately 2 products per major category
+- Multiple brands
+- At least 3 new motorcycles
+- At least 3 used motorcycles
+- Fitment mappings
+- Categories/subcategories
+
+Do not put mock arrays directly in React components.
+
+Seed data must remain easy to remove later.
+
+## Priority 14 — SEO / i18n / Performance
+
+Audit and complete:
+
+- Arabic
+- English
+- RTL
+- LTR
+- Dynamic metadata
+- Canonical URLs
+- hreflang
+- sitemap
+- robots.txt
+- OpenGraph
+- structured data
+- product SEO
+- motorcycle SEO
+- brand/category SEO
+- image optimization
+- pagination
+- database indexes
+- cache strategy
+- bundle size
+- unnecessary client components
+- N+1 queries
+
+## Priority 15 — Testing
+
+Expand the current tests substantially.
+
+Add tests for:
+
+- Supabase RLS
+- Authentication
+- RBAC
+- Staff permissions
+- Product catalog
+- Variants
+- Fitment
+- My Garage
+- Cart
+- Order creation
+- Price snapshots
+- Reservation creation
+- Reservation deposits
+- Reviews
+- Promotions
+- Coupon limits
+- Inventory
+- Returns
+- Warranty
+- Admin authorization
+
+Add Playwright E2E coverage for critical workflows.
+
+At minimum test:
+
+1. Customer registration/login
+2. Browse motorcycle
+3. Reserve motorcycle
+4. Browse product
+5. Select variant
+6. Add to cart
+7. Checkout
+8. View order
+9. Add motorcycle to garage
+10. Filter compatible products
+11. Verified product review
+12. Admin login
+13. Admin inventory update
+14. Admin order processing
+15. Admin reservation processing
+
+## Payment Rule
+
+A real payment provider is still **NOT selected**.
+
+Therefore:
+
+- Keep payment architecture provider-agnostic.
+- Keep Visa/Mastercard in sandbox/provider-pending implementation.
+- Keep InstaPay in reference/pending verification architecture.
+- Never fake production payment success.
+- Never store card data.
+- Do not block the rest of the project because of payment provider credentials.
+
+Document exactly what remains necessary when a provider is later selected.
+
+## Database
+
+Create proper new Supabase migrations for every schema change.
+
+Never rewrite old migrations merely to make tests pass unless the repository's migration policy explicitly permits it.
+
+Use:
+
+- Foreign keys
+- Check constraints
+- Unique constraints
+- Indexes
+- Transactions
+- RLS
+- Server-side authorization
+
+where appropriate.
+
+## Critical Security Rule
+
+Never trust these values from the browser:
+
+- product price
+- motorcycle price
+- deposit amount
+- discount
+- coupon result
+- tax
+- shipping amount
+- stock
+- role
+- permission
+- order status
+- payment status
+- refund amount
+
+Recalculate/verify privileged values server-side.
+
+## Working Method
+
+Do not stop after the gap analysis.
+
+After identifying missing work:
+
+1. Assign remaining domains to agents.
+2. Run them in parallel where safe.
+3. Avoid overlapping file ownership.
+4. Merge/review each agent's work.
+5. Fix integration problems.
+6. Continue until all implementable specification items are complete.
+
+Keep updating:
+
+`AGENT_STATUS.md`
+
+throughout the work.
+
+## Final Verification
+
+Before stopping, run the repository's equivalent of:
+
+- dependency install verification
+- formatting check
+- ESLint
+- TypeScript typecheck
+- unit tests
+- integration tests
+- Supabase database tests
+- RLS/security tests
+- production build
+- Playwright E2E
+- git diff check
+- git status
+
+Fix failures rather than merely listing them.
+
+Then update:
+
+- `README.md`
+- `ARCHITECTURE.md`
+- `DATABASE.md`
+- `SECURITY.md`
+- `PAYMENTS.md`
+- `TESTING.md`
+- `DEPLOYMENT.md`
+- `AGENT_STATUS.md`
+
+Finally give me a precise report containing:
+
+- Completed features
+- Remaining incomplete features
+- Agent results
+- Database migrations
+- Security checks
+- Exact test counts/results
+- Production build status
+- External configuration still required
+- Any payment-provider requirements
+
+Do not describe REVORA MOTO as production-ready unless the tests and implementation actually justify that statement.
+
+Continue now from the existing codebase.

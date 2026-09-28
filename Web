@@ -1,0 +1,1828 @@
+# REVORA MOTO — FULL E-COMMERCE BUILD
+
+You are the Lead Engineer and Orchestrator for a complete production-grade motorcycle e-commerce platform called:
+
+**REVORA MOTO**
+
+Your job is NOT to implement everything sequentially yourself.
+
+You MUST launch multiple specialized agents/sub-agents and coordinate them in parallel.
+
+Use **12 specialized agents**, with the main Codex session acting as the Lead Architect / Integrator.
+
+The final result must be a complete, functional, secure, tested web application.
+
+Do not stop after scaffolding.
+
+Do not create placeholder-only implementations.
+
+Do not leave TODOs for core functionality.
+
+---
+
+# 1. PRODUCT VISION
+
+REVORA MOTO is a premium motorcycle marketplace and motorcycle equipment store operating initially in Egypt.
+
+The platform sells:
+
+- New motorcycles
+- Used motorcycles
+- Motorcycle accessories
+- Riding equipment
+- Spare parts
+- Performance parts
+- Maintenance products
+- Electronics
+- Tires
+- Helmets
+- Protective equipment
+- Motorcycle lifestyle products
+
+Normal products may be purchased directly online.
+
+Motorcycles themselves are NOT fully purchased through normal cart checkout.
+
+Motorcycles use:
+
+**Motorcycle → Reservation → Deposit Payment → Sales Follow-up**
+
+Both new and used motorcycles must be supported.
+
+---
+
+# 2. TARGET MARKET
+
+Initial market:
+
+Egypt
+
+Languages:
+
+- Arabic
+- English
+
+Currencies:
+
+- EGP
+- USD
+
+Use EGP as the canonical/base accounting currency.
+
+USD display should use a configurable exchange-rate service/value.
+
+Never hardcode exchange rates into components.
+
+---
+
+# 3. REQUIRED STACK
+
+Use a modern production architecture based on:
+
+- Next.js
+- React
+- TypeScript
+- Next.js App Router
+- React Server Components where appropriate
+- Server Actions where appropriate
+- Supabase
+- PostgreSQL
+- Supabase Auth
+- Supabase Storage
+- Supabase Realtime only where useful
+- Tailwind CSS
+- shadcn/ui or equivalent accessible component primitives
+- Zod
+- React Hook Form where forms require client state
+- TanStack Query only where server-side Next.js patterns are insufficient
+- Zustand only for lightweight UI/client state if required
+- ESLint
+- Prettier
+- Vitest
+- React Testing Library
+- Playwright
+
+Avoid unnecessary dependencies.
+
+Prefer server-side code over exposing business logic to the browser.
+
+---
+
+# 4. AUTHENTICATION
+
+Support:
+
+- Email + Password
+- Google OAuth
+
+Implement:
+
+- Sign up
+- Sign in
+- Sign out
+- Forgot password
+- Password reset
+- Email verification
+- OAuth callback
+- Session management
+- Protected routes
+- Admin authentication
+
+---
+
+# 5. SECURITY REQUIREMENTS
+
+Security is mandatory.
+
+Implement:
+
+- Supabase RLS
+- RBAC
+- Server-side permission validation
+- Admin route protection
+- Staff role separation
+- Input validation
+- Zod schemas
+- Safe database queries
+- Rate limiting for sensitive endpoints
+- Secure file upload validation
+- MIME validation
+- File size limits
+- Audit logs
+- Login security
+- CSRF-conscious architecture
+- No service-role key in the browser
+- No secrets committed to git
+- Environment validation
+- Security headers
+- CSP where practical
+- Secure cookies
+- Order ownership validation
+- Review ownership validation
+- Payment amount verification server-side
+- Reservation amount verification server-side
+
+Never trust price, role, discount, deposit amount, inventory quantity, or payment status coming from the browser.
+
+---
+
+# 6. DESIGN DIRECTION
+
+Create a completely custom identity for REVORA MOTO.
+
+Do NOT copy another motorcycle manufacturer's website.
+
+Visual direction:
+
+- Premium
+- Motorsport
+- Dark luxury
+- Mechanical
+- Technical
+- High-performance
+- Minimal but aggressive
+- Large motorcycle imagery
+- Precision typography
+- Premium motion
+- Strong product photography
+- Excellent Arabic RTL support
+
+The UI should feel suitable for motorcycles such as:
+
+- BMW superbikes
+- Ducati superbikes
+- Kawasaki Ninja
+- Yamaha R-series
+- Honda CBR
+- KTM
+- Aprilia
+
+without copying their branding.
+
+Build a complete design system:
+
+- Colors
+- Typography
+- Spacing
+- Grid
+- Radius
+- Shadows
+- Surface hierarchy
+- Buttons
+- Inputs
+- Cards
+- Tables
+- Badges
+- Navigation
+- Modals
+- Toasts
+- Loading states
+- Empty states
+- Error states
+- Skeletons
+
+Dark theme is the primary identity.
+
+Support responsive layouts from mobile through ultrawide monitors.
+
+---
+
+# 7. MOTORCYCLE MEDIA EXPERIENCE
+
+The motorcycle detail page must receive special attention.
+
+Create a premium media experience including:
+
+- Large hero image
+- Full-screen gallery
+- Thumbnail navigation
+- Smooth image transitions
+- Zoom
+- Multiple viewing angles
+- Mobile swipe gestures
+- Desktop keyboard navigation
+- Exterior detail shots
+- Dashboard/detail photographs
+- Optional video-ready data architecture
+- Image loading optimization
+
+Do not make the gallery a basic carousel.
+
+It should feel like a premium vehicle showroom.
+
+---
+
+# 8. MAIN PUBLIC PAGES
+
+Implement at minimum:
+
+- Home
+- Motorcycles
+- New Motorcycles
+- Used Motorcycles
+- Motorcycle details
+- Shop
+- Category
+- Brand
+- Product details
+- Search
+- Fitment search
+- Compare motorcycles
+- Cart
+- Checkout
+- Reservation checkout
+- Wishlist
+- Promotions
+- Brands
+- About
+- Contact
+- FAQ
+- Warranty information
+- Return policy
+- Privacy policy
+- Terms
+- Branches
+- Account
+- Orders
+- Order details
+- Reservations
+- My Garage
+- Saved addresses
+- Notifications
+- Reviews
+
+Provide correct Arabic and English routing/translation architecture.
+
+---
+
+# 9. STORE CATEGORIES
+
+Build a robust category hierarchy.
+
+Include categories such as:
+
+## Motorcycles
+- New Motorcycles
+- Used Motorcycles
+
+## Helmets
+- Full Face
+- Modular
+- Open Face
+- Adventure
+- Off-road
+- Visors
+- Helmet Accessories
+
+## Riding Gear
+- Jackets
+- Riding Suits
+- Pants
+- Gloves
+- Boots
+- Rain Gear
+- Thermal Gear
+
+## Protection
+- Back Protectors
+- Chest Protectors
+- Knee Protection
+- Elbow Protection
+- Armor Inserts
+- Neck Protection
+
+## Motorcycle Parts
+- Engine
+- Cooling
+- Fuel System
+- Air Intake
+- Brakes
+- Suspension
+- Steering
+- Clutch
+- Transmission
+- Chain & Sprockets
+- Controls
+- Cables
+
+## Performance
+- Exhaust Systems
+- Air Filters
+- ECU / Tuning
+- Performance Brakes
+- Performance Suspension
+- Lightweight Parts
+
+## Tires & Wheels
+- Sport Tires
+- Touring Tires
+- Adventure Tires
+- Off-road Tires
+- Wheels
+- Valves
+- Tire Accessories
+
+## Electrical
+- Batteries
+- Lighting
+- Indicators
+- Chargers
+- Wiring
+- Electrical Components
+
+## Electronics
+- Intercoms
+- Action Camera Accessories
+- GPS
+- Navigation
+- Phone Mounts
+- USB Chargers
+- Motorcycle Electronics
+
+## Body & Styling
+- Windscreens
+- Mirrors
+- Levers
+- Fairings
+- Frame Sliders
+- Tank Pads
+- Tail Tidies
+- Crash Protection
+
+## Luggage
+- Top Boxes
+- Side Cases
+- Tank Bags
+- Tail Bags
+- Backpacks
+
+## Maintenance
+- Engine Oils
+- Brake Fluid
+- Coolant
+- Chain Lubricants
+- Cleaners
+- Polish
+- Filters
+- Spark Plugs
+
+## Tools
+- Motorcycle Tools
+- Maintenance Tools
+- Paddock Stands
+- Tire Tools
+- Diagnostic Accessories
+
+## Security
+- Disc Locks
+- Chains
+- Alarms
+- Trackers
+- Covers
+
+## Lifestyle
+- Shirts
+- Hoodies
+- Caps
+- Bags
+- Motorcycle Merchandise
+
+The database must allow unlimited future categories and subcategories.
+
+---
+
+# 10. PRODUCT SYSTEM
+
+Products must support:
+
+- Name AR
+- Name EN
+- Description AR
+- Description EN
+- SKU
+- Barcode
+- Brand
+- Category
+- Subcategory
+- Price
+- Sale price
+- Cost
+- Currency
+- Tax configuration
+- Stock
+- Low stock threshold
+- Images
+- Variants
+- Size
+- Color
+- Material
+- Weight
+- Dimensions
+- Status
+- Featured
+- New arrival
+- Bestseller
+- Specifications
+- Compatibility
+- Warranty
+- SEO metadata
+
+Variants must have independent:
+
+- SKU
+- Price
+- Stock
+- Images when necessary
+
+---
+
+# 11. MOTORCYCLE FITMENT ENGINE
+
+This is a major feature.
+
+Customers must be able to select:
+
+Brand
+→ Model
+→ Year
+→ Engine / Variant
+
+Then see compatible parts.
+
+Create proper normalized fitment tables.
+
+Support:
+
+- Universal products
+- Exact fit products
+- Multiple compatible motorcycles
+- Exclusions
+- Year ranges
+
+Example:
+
+BMW
+→ S 1000 RR
+→ 2026
+→ M Package
+
+Then show compatible:
+
+- Exhaust
+- Air filter
+- Brake pads
+- Windscreen
+- Frame sliders
+- Levers
+- Tires
+- etc.
+
+---
+
+# 12. MY GARAGE
+
+Authenticated customers can save motorcycles.
+
+Example:
+
+My Garage
+
+BMW S 1000 RR
+2026
+M Package
+
+Once selected as the active motorcycle:
+
+- Highlight compatible products
+- Allow filtering only compatible products
+- Show compatibility badge
+- Warn about incompatible products
+
+---
+
+# 13. MOTORCYCLE DATABASE
+
+Motorcycles are separate from normal products.
+
+Support:
+
+- Brand
+- Model
+- Generation
+- Year
+- Condition
+- New / Used
+- Engine capacity
+- Cylinders
+- Engine type
+- Cooling
+- Horsepower
+- Torque
+- Transmission
+- Top speed
+- Wet weight
+- Dry weight
+- Seat height
+- Fuel tank
+- ABS
+- Traction control
+- Quickshifter
+- Riding modes
+- Electronics
+- Suspension
+- Brakes
+- Tires
+- Color
+- VIN when appropriate internally
+- Stock/reference number
+- Price
+- Deposit amount
+- Availability
+- Branch
+- Gallery
+- Specifications
+- Features
+- SEO
+
+---
+
+# 14. USED MOTORCYCLES
+
+Used motorcycles additionally support:
+
+- Mileage
+- Number of owners
+- Registration year
+- Service history
+- Accident status
+- Paint/body condition
+- Mechanical condition
+- Inspection status
+- Warranty status
+- Modifications
+- Seller/source information internally
+- Inspection notes
+- Vehicle history notes
+
+Do not expose internal/private information to customers.
+
+---
+
+# 15. MOTORCYCLE RESERVATIONS
+
+Motorcycles use reservations.
+
+Flow:
+
+Motorcycle page
+→ Reserve Motorcycle
+→ Sign in
+→ Customer details
+→ Select branch
+→ Confirm reservation
+→ Pay deposit
+→ Reservation created
+→ Sales team notified
+→ Customer receives confirmation
+
+Reservation statuses:
+
+- pending
+- awaiting_payment
+- deposit_paid
+- contacted
+- appointment_scheduled
+- completed
+- cancelled
+- expired
+- refunded
+
+Prevent duplicate conflicting active reservations where required.
+
+Reservation deposits must be recorded separately from normal orders.
+
+---
+
+# 16. PAYMENTS
+
+Required methods:
+
+- Visa
+- Mastercard
+- InstaPay
+
+Create a payment-provider abstraction.
+
+Do NOT fake a real payment success.
+
+Never store card details.
+
+Payment integration must support sandbox and production configuration.
+
+All payment success must be verified server-side.
+
+Create:
+
+PaymentProvider interface
+
+and adapters that can later support a selected Egyptian payment gateway.
+
+For Visa/Mastercard:
+
+Use a configurable gateway adapter.
+
+For InstaPay:
+
+Do not invent a private/unofficial API.
+
+Implement the data model and checkout workflow in a way that can support an official provider/payment-reference integration.
+
+If live credentials/provider details are unavailable, implement:
+
+- sandbox adapter
+- payment reference support
+- pending verification state
+
+and document exactly what configuration is required for production.
+
+Payment records must support:
+
+- pending
+- authorized
+- captured
+- failed
+- cancelled
+- refunded
+- partially_refunded
+
+---
+
+# 17. NORMAL E-COMMERCE CHECKOUT
+
+For normal products:
+
+Cart
+→ Account/Guest policy as selected by architecture
+→ Address
+→ Fulfillment
+→ Payment
+→ Order
+→ Confirmation
+
+Orders need:
+
+- Order number
+- Customer
+- Items
+- Variants
+- Quantity
+- Unit price snapshot
+- Discount snapshot
+- Tax snapshot
+- Totals
+- Payment
+- Status
+- Notes
+- History
+- Invoice
+
+Never derive historical orders from current product prices.
+
+Store immutable order snapshots.
+
+---
+
+# 18. REVIEWS
+
+Only verified customers may review a product.
+
+Review eligibility:
+
+User purchased product
+AND
+Order status = delivered/completed.
+
+Prevent arbitrary reviews.
+
+Support:
+
+- Rating
+- Written review
+- Optional images
+- Verified purchase badge
+- Moderation status
+
+---
+
+# 19. WISHLIST
+
+Implement:
+
+- Add/remove
+- Cross-device account persistence
+- Product wishlist
+- Motorcycle wishlist
+
+---
+
+# 20. MOTORCYCLE COMPARISON
+
+Allow comparison of several motorcycles.
+
+Compare:
+
+- Engine
+- Capacity
+- Power
+- Torque
+- Weight
+- Seat height
+- Tank size
+- Brakes
+- Suspension
+- Electronics
+- Features
+- Price
+
+Build desktop table and usable mobile interface.
+
+---
+
+# 21. SEARCH
+
+Build strong search UX.
+
+Support:
+
+- Product name
+- Motorcycle name
+- Brand
+- Category
+- SKU where appropriate
+- Compatibility
+- Search suggestions
+- Recent searches
+- Popular searches
+
+Filters include:
+
+- Price
+- Brand
+- Category
+- Size
+- Color
+- Availability
+- Compatibility
+- CC
+- Year
+- Condition
+- Motorcycle type
+
+---
+
+# 22. PROMOTIONS
+
+Support:
+
+- Coupon codes
+- Percentage discounts
+- Fixed discounts
+- Product discounts
+- Category discounts
+- Brand discounts
+- Scheduled promotions
+- Minimum purchase amount
+- Usage limits
+- Customer usage limits
+- Start/end times
+
+All promotion calculations must be validated server-side.
+
+---
+
+# 23. CUSTOMER ACCOUNT
+
+Implement:
+
+- Profile
+- Orders
+- Order details
+- Reservations
+- Wishlist
+- My Garage
+- Saved addresses
+- Reviews
+- Notifications
+- Warranty registrations
+- Return requests
+
+---
+
+# 24. NOTIFICATIONS
+
+Use:
+
+- In-app/web notification center
+- Email
+
+No SMS requirement initially.
+
+Notification examples:
+
+- Order placed
+- Payment successful
+- Order status changed
+- Reservation confirmed
+- Deposit received
+- Reservation appointment
+- Product back in stock
+- Price change
+- Return status
+- Warranty update
+
+---
+
+# 25. ADMIN DASHBOARD
+
+Build a serious admin dashboard.
+
+Admin areas:
+
+- Dashboard
+- Products
+- Variants
+- Categories
+- Brands
+- Motorcycles
+- Used motorcycles
+- Fitment
+- Orders
+- Reservations
+- Payments
+- Customers
+- Reviews
+- Inventory
+- Stock movements
+- Branches
+- Suppliers
+- Purchase orders
+- Promotions
+- Returns
+- Warranties
+- Notifications
+- Content
+- Staff
+- Roles
+- Permissions
+- Reports
+- Audit logs
+- Settings
+
+---
+
+# 26. STAFF ROLES
+
+Implement proper RBAC.
+
+Default roles:
+
+- Owner
+- Super Admin
+- Admin
+- Store Manager
+- Sales
+- Warehouse
+- Customer Support
+- Accountant
+- Content Manager
+
+Permissions must be granular.
+
+Do not rely only on hiding UI elements.
+
+Enforce permissions server-side and through database policies.
+
+---
+
+# 27. INVENTORY
+
+Support:
+
+- Main warehouse
+- Multiple branches
+- Stock per location
+- Reserved stock
+- Available stock
+- Incoming stock
+- Stock adjustments
+- Transfers
+- Stock movement history
+- Low stock alerts
+
+Every manual inventory adjustment must create an audit trail.
+
+---
+
+# 28. SUPPLIERS
+
+Build supplier management.
+
+Internal-only data may contain:
+
+- Supplier
+- Contact details
+- Product relationship
+- Purchase cost
+- Purchase orders
+- Receiving
+- Supplier references
+
+Supplier cost information must never be exposed publicly.
+
+---
+
+# 29. RETURNS AND WARRANTIES
+
+Build:
+
+Returns:
+
+- Request
+- Reason
+- Images
+- Approval
+- Rejection
+- Received
+- Inspection
+- Refund
+- Completed
+
+Warranty:
+
+- Product
+- Order
+- Serial number
+- Warranty start
+- Warranty end
+- Status
+- Claims
+- Notes
+
+---
+
+# 30. INVOICES
+
+Generate customer invoices.
+
+Invoice information:
+
+- REVORA MOTO branding
+- Order number
+- Customer
+- Items
+- Totals
+- Payment method
+- Date
+- Tax details where configured
+
+Architecture should be capable of future Egyptian e-invoice integration.
+
+Do not claim official tax/e-invoice compliance unless specifically implemented and validated.
+
+---
+
+# 31. ANALYTICS
+
+Admin reporting must include:
+
+- Revenue
+- Orders
+- Average order value
+- Reservations
+- Deposit revenue
+- Best-selling products
+- Best-performing categories
+- Motorcycle interest
+- Conversion
+- Inventory
+- Low stock
+- Returns
+- Refunds
+- Customer growth
+
+Do not expose sensitive analytics publicly.
+
+---
+
+# 32. SEO
+
+Implement technical SEO.
+
+Include:
+
+- Dynamic metadata
+- Canonical URLs
+- Sitemap
+- robots.txt
+- OpenGraph
+- Twitter cards
+- Product structured data
+- Breadcrumb structured data
+- Organization structured data
+- Motorcycle pages optimized for search
+- Category SEO
+- Brand SEO
+- Arabic and English alternate URLs
+
+---
+
+# 33. PERFORMANCE
+
+Target production quality.
+
+Implement:
+
+- Next/Image
+- Responsive images
+- Lazy loading
+- Route-level loading UI
+- Caching strategy
+- Server rendering
+- Database indexes
+- Pagination
+- Efficient Supabase queries
+- Avoid N+1 queries
+- Bundle discipline
+
+Avoid shipping huge client JavaScript bundles unnecessarily.
+
+---
+
+# 34. ACCESSIBILITY
+
+Implement:
+
+- Semantic HTML
+- Keyboard navigation
+- Focus states
+- ARIA where appropriate
+- Accessible modal/dialog behavior
+- Proper labels
+- Contrast
+- RTL accessibility considerations
+
+---
+
+# 35. DEMO DATA
+
+The owner wants example content initially.
+
+Create a seed system.
+
+Add approximately:
+
+- 2 example products for each major product category
+- several brands
+- several motorcycle models
+- at least 3 new motorcycles
+- at least 3 used motorcycles
+- example fitment relationships
+
+Seed content must be clearly isolated from production business logic.
+
+It must be easy to delete later.
+
+Do NOT scatter mock data inside UI components.
+
+All example products must come from database seed scripts.
+
+---
+
+# 36. DATABASE
+
+Create Supabase migrations.
+
+Expected entity areas include, but are not limited to:
+
+profiles
+addresses
+staff
+roles
+permissions
+staff_roles
+role_permissions
+
+brands
+categories
+products
+product_variants
+product_images
+product_attributes
+
+motorcycle_brands
+motorcycle_models
+motorcycle_generations
+motorcycle_variants
+motorcycles
+motorcycle_images
+used_motorcycle_details
+
+fitment
+fitment_rules
+
+garage
+garage_motorcycles
+
+wishlists
+wishlist_items
+
+warehouses
+branches
+inventory
+inventory_movements
+
+carts
+cart_items
+
+orders
+order_items
+order_history
+
+payments
+payment_events
+
+motorcycle_reservations
+reservation_history
+
+reviews
+review_images
+
+promotions
+promotion_rules
+coupon_usage
+
+suppliers
+supplier_products
+purchase_orders
+purchase_order_items
+
+returns
+return_items
+
+warranties
+warranty_claims
+
+notifications
+
+invoices
+
+audit_logs
+
+site_settings
+
+Add indexes, foreign keys, constraints and RLS.
+
+Use proper enums or constrained fields where appropriate.
+
+Do not overuse PostgreSQL enums when an extensible lookup table is more appropriate.
+
+---
+
+# 37. AGENT ORGANIZATION
+
+The main Codex session is the Lead Engineer.
+
+Launch **12 specialized agents**.
+
+Each agent must have clear file/domain ownership.
+
+Avoid multiple agents modifying the same core files simultaneously.
+
+Use branches/worktrees if the environment supports them.
+
+Otherwise coordinate file ownership strictly.
+
+---
+
+## AGENT 1 — ARCHITECTURE & FOUNDATION
+
+Responsibilities:
+
+- Repository audit
+- Next.js initialization if required
+- TypeScript configuration
+- linting
+- formatting
+- project structure
+- environment schema
+- shared libraries
+- error architecture
+- logging
+- base middleware
+- shared types strategy
+- development scripts
+
+Create:
+
+ARCHITECTURE.md
+
+Do not build feature UI owned by other agents.
+
+---
+
+## AGENT 2 — DATABASE & SUPABASE
+
+Responsibilities:
+
+- PostgreSQL schema
+- migrations
+- RLS
+- policies
+- indexes
+- seed infrastructure
+- database functions where justified
+- storage buckets
+- database documentation
+
+Must collaborate with all feature requirements.
+
+Database security is this agent's responsibility.
+
+---
+
+## AGENT 3 — DESIGN SYSTEM & PUBLIC SHELL
+
+Responsibilities:
+
+- REVORA MOTO identity
+- global CSS
+- Tailwind configuration
+- typography
+- tokens
+- shared UI
+- header
+- mega menu
+- footer
+- mobile navigation
+- responsive shell
+- Arabic RTL
+- English LTR
+- homepage visual system
+
+Do not implement business data logic owned by other agents.
+
+---
+
+## AGENT 4 — AUTH, ACCOUNT & SECURITY
+
+Responsibilities:
+
+- Supabase Auth
+- Email/password
+- Google OAuth
+- authentication pages
+- password reset
+- account security
+- authorization helpers
+- customer profile
+- addresses
+- protected routes
+- staff permission utilities
+
+Coordinate RBAC with Agent 2.
+
+---
+
+## AGENT 5 — PRODUCT CATALOG & FITMENT
+
+Responsibilities:
+
+- Shop
+- Categories
+- Brands
+- Product page
+- Variants
+- filters
+- search
+- Fitment engine
+- compatibility selector
+- product compatibility status
+- My Garage compatibility integration
+
+---
+
+## AGENT 6 — MOTORCYCLE MARKETPLACE
+
+Responsibilities:
+
+- New motorcycles
+- Used motorcycles
+- motorcycle listing
+- motorcycle details
+- premium showroom gallery
+- motorcycle specifications
+- used motorcycle inspection display
+- motorcycle comparison
+- motorcycle filtering
+
+This agent owns the premium motorcycle browsing experience.
+
+---
+
+## AGENT 7 — RESERVATIONS & DEPOSITS
+
+Responsibilities:
+
+- Motorcycle reservation workflow
+- branch selection
+- reservation statuses
+- deposit logic
+- sales workflow
+- reservation history
+- customer reservation screens
+- admin reservation screens
+
+Coordinate payments with Agent 8.
+
+---
+
+## AGENT 8 — CART, CHECKOUT & PAYMENTS
+
+Responsibilities:
+
+- Cart
+- normal checkout
+- order creation
+- order snapshots
+- Visa/Mastercard payment abstraction
+- InstaPay-compatible architecture
+- payment verification
+- refunds architecture
+- payment events
+- checkout validation
+
+Never implement fake production payment success.
+
+---
+
+## AGENT 9 — CUSTOMER ENGAGEMENT
+
+Responsibilities:
+
+- Wishlist
+- Reviews
+- Verified purchase enforcement
+- Review images
+- Notification center
+- Email notification architecture
+- Back-in-stock notification architecture
+- Price-change notification architecture
+- Warranty customer screens
+- Return customer screens
+
+---
+
+## AGENT 10 — ADMIN, INVENTORY & OPERATIONS
+
+Responsibilities:
+
+- Admin dashboard
+- Product administration
+- Motorcycle administration
+- Inventory
+- Warehouses
+- Branches
+- Stock transfers
+- Suppliers
+- Purchase orders
+- Promotions
+- Returns
+- Warranties
+- Staff management
+- RBAC UI
+- Audit logs
+- Operational reports
+
+---
+
+## AGENT 11 — SEO, I18N & PERFORMANCE
+
+Responsibilities:
+
+- Arabic/English localization
+- RTL/LTR correctness
+- metadata
+- sitemap
+- robots
+- structured data
+- canonical URLs
+- hreflang
+- image optimization
+- performance audit
+- caching
+- server/client boundary audit
+- query optimization
+
+---
+
+## AGENT 12 — TESTING, QA & RELEASE
+
+Responsibilities:
+
+- unit tests
+- integration tests
+- Playwright E2E
+- authentication tests
+- RLS/security tests
+- checkout tests
+- reservation tests
+- fitment tests
+- review eligibility tests
+- admin permission tests
+- responsive testing
+- accessibility testing
+- production build verification
+- final regression
+
+This agent must NOT simply report problems.
+
+It should fix issues that do not violate another agent's active ownership, or report them to Lead for immediate assignment.
+
+---
+
+# 38. LEAD ENGINEER RESPONSIBILITIES
+
+Main Codex session must:
+
+1. Inspect repository.
+2. Create an implementation plan.
+3. Create file ownership map.
+4. Spawn all appropriate agents.
+5. Track their status.
+6. Resolve dependencies.
+7. Review every agent's work.
+8. Integrate branches/worktrees.
+9. Resolve conflicts.
+10. Run migrations.
+11. Run lint.
+12. Run typecheck.
+13. Run tests.
+14. Run production build.
+15. Run E2E tests.
+16. Run security review.
+17. Fix integration issues.
+18. Repeat checks until clean.
+
+Do not merely collect reports from agents.
+
+The Lead must integrate and validate the finished system.
+
+---
+
+# 39. AGENT COMMUNICATION
+
+Each agent must report:
+
+- completed work
+- files created
+- files modified
+- migrations created
+- tests created
+- tests executed
+- known dependencies
+- unresolved issue
+
+Lead maintains:
+
+AGENT_STATUS.md
+
+Use statuses:
+
+- QUEUED
+- ACTIVE
+- BLOCKED
+- REVIEW
+- DONE
+
+---
+
+# 40. DEVELOPMENT PHASES
+
+Use this execution order.
+
+## PHASE A — FOUNDATION
+
+Agents:
+
+1
+2
+3
+
+Build:
+
+- architecture
+- project skeleton
+- database
+- design system
+
+Other agents may inspect specifications during this phase but must not conflict with foundation files.
+
+---
+
+## PHASE B — IDENTITY & CORE DOMAIN
+
+Agents:
+
+4
+5
+6
+
+Build:
+
+- Auth
+- Products
+- Fitment
+- Motorcycles
+- User accounts
+
+---
+
+## PHASE C — COMMERCE
+
+Agents:
+
+7
+8
+9
+
+Build:
+
+- Reservations
+- Deposits
+- Cart
+- Checkout
+- Payments
+- Wishlist
+- Reviews
+- Notifications
+
+---
+
+## PHASE D — OPERATIONS
+
+Agent:
+
+10
+
+Build operational backend and administration.
+
+---
+
+## PHASE E — OPTIMIZATION
+
+Agent:
+
+11
+
+Audit and improve:
+
+- i18n
+- SEO
+- RTL
+- performance
+
+---
+
+## PHASE F — FINAL QA
+
+Agent:
+
+12
+
+Full-system test and security validation.
+
+---
+
+# 41. PARALLELISM
+
+Within each phase, agents should work in parallel whenever dependencies allow it.
+
+Do not run agents sequentially without a technical reason.
+
+If an agent becomes blocked:
+
+- document dependency
+- switch it to another non-conflicting task
+- unblock it once dependency is merged
+
+---
+
+# 42. FILE SIZE AND CODE QUALITY
+
+Prefer maintainable files.
+
+Avoid giant 1000+ line React components.
+
+Split by responsibility.
+
+Use:
+
+- server modules
+- repositories/services
+- schemas
+- domain types
+- components
+- feature modules
+
+Avoid unnecessary abstraction, but do not mix UI, SQL, authorization and payment logic in one file.
+
+---
+
+# 43. NO FAKE IMPLEMENTATIONS
+
+Forbidden:
+
+- fake checkout success
+- fake payment confirmation
+- fake auth
+- hardcoded admin
+- hardcoded product arrays in components
+- insecure role checks only in UI
+- disabling RLS to make development easier
+- using service role from frontend
+- hardcoded secrets
+- fake analytics pretending to be real
+- fake inventory state
+- TODO placeholders for core features
+
+Demo data is allowed only through seed scripts.
+
+---
+
+# 44. DOCUMENTATION
+
+Create:
+
+README.md
+
+ARCHITECTURE.md
+
+DATABASE.md
+
+SECURITY.md
+
+PAYMENTS.md
+
+DEPLOYMENT.md
+
+TESTING.md
+
+AGENT_STATUS.md
+
+.env.example
+
+Include exact local development instructions.
+
+---
+
+# 45. REQUIRED FINAL VERIFICATION
+
+Before declaring completion, run all available equivalents of:
+
+install
+
+lint
+
+format check
+
+typecheck
+
+unit tests
+
+integration tests
+
+database migration checks
+
+production build
+
+Playwright E2E
+
+security/RLS tests
+
+Then inspect:
+
+git status
+
+No unexplained generated garbage.
+
+No secrets.
+
+No broken imports.
+
+No unresolved merge conflicts.
+
+No critical TODOs.
+
+---
+
+# 46. FINAL REPORT
+
+At completion provide:
+
+## Architecture
+
+What was built.
+
+## Agents
+
+What each agent completed.
+
+## Features
+
+Implemented feature list.
+
+## Database
+
+Migrations and security model.
+
+## Payments
+
+Implemented payment architecture and what production credentials/providers remain required.
+
+## Tests
+
+Exact test results.
+
+## Security
+
+Security checks performed.
+
+## Demo Accounts
+
+Only if safe development accounts were intentionally created locally.
+
+Never publish passwords or production credentials.
+
+## Deployment
+
+Exact deployment steps.
+
+## Remaining External Requirements
+
+Only things genuinely dependent on external accounts, API keys, payment providers, domain setup or production credentials.
+
+---
+
+# IMPORTANT EXECUTION RULE
+
+Do not stop after producing the plan.
+
+After auditing the repository:
+
+**start the agents and begin implementation immediately.**
+
+Continue through integration, testing and production build.
+
+If the repository already contains useful implementation, preserve good existing work and integrate it rather than blindly rewriting everything.
+
+The finished result should be a coherent production application, not twelve disconnected prototypes.

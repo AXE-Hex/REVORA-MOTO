@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.next-e2e/
+.next-media/
+.env
+.env.local
+!.env.example
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
